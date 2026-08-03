@@ -1,0 +1,16 @@
+---
+title: billing_unconfigured
+description: Billing is not configured for this deployment.
+---
+
+<ErrorMeta code="billing_unconfigured" />
+
+## When this happens
+
+A billing action was attempted but this deployment has no payment provider
+configured. Common on self-hosted or local environments.
+
+## How to fix it
+
+If you operate this deployment, set the billing provider credentials (for
+example `STRIPE_SECRET_KEY`) and restart the API. Otherwise contact support.

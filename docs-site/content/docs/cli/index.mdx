@@ -1,0 +1,27 @@
+---
+title: hm CLI
+description: The hm command line — scaffold, run, and inspect pipelines from local code.
+---
+
+`hm` is the Harmont command line. It scaffolds pipelines, runs them against
+your local working tree, and inspects what it would run.
+
+| Command | Purpose |
+| --- | --- |
+| [`hm init`](/cli/init) | Scaffold a starter pipeline into `.hm/`. |
+| [`hm run`](/cli/run) | Run a pipeline against your local working tree, in Docker. |
+| [`hm pipelines`](/cli/pipelines) | Print the discovered pipelines as JSON. |
+| `hm render <slug>` | Print the JSON a pipeline compiles to, without running it. |
+| `hm cache {save,restore,clean}` | Manage the local Docker image/workspace cache. |
+| `hm plugin list` | List the registered runner plugins. |
+| `hm version` | Print the CLI version. |
+
+Configuration lives in [`~/.config/hm/config.toml`](/cli/config).
+
+## Global options
+
+| Flag | Meaning |
+| --- | --- |
+| `--api-url <URL>` | Override the API base URL (env `HARMONT_API_URL`). |
+| `-v, --verbose` | Enable debug logging. |
+| `--no-color` | Disable colored output. |

@@ -1,0 +1,50 @@
+---
+title: hm init
+description: Scaffold a starter pipeline into .hm/.
+---
+
+## Synopsis
+
+```bash
+hm init [--template <KIND>] [--dir <PATH>] [--force]
+```
+
+`hm init` writes a ready-to-run starter pipeline to `.hm/`. Run it with
+no flags for an interactive picker, or pass `--template` to skip the prompt.
+
+## Templates
+
+| Template | Flag value | File written |
+| --- | --- | --- |
+| CMake | `cmake` | `.hm/pipeline.py` |
+| Elixir | `elixir` | `.hm/pipeline.py` |
+| Next.js | `nextjs` | `.hm/pipeline.ts` |
+| JavaScript / TypeScript | `js` | `.hm/pipeline.ts` |
+| Rust | `rust` | `.hm/pipeline.py` |
+| Zig | `zig` | `.hm/pipeline.ts` |
+| Python | `python` | `.hm/pipeline.py` |
+
+## Options
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `-t, --template <KIND>` | _(prompt)_ | Pick a template non-interactively. |
+| `-d, --dir <PATH>` | `.` | Target directory. |
+| `--force` | off | Overwrite an existing `.hm/` directory. |
+
+## Example
+
+```bash
+hm init --template cmake
+```
+
+```
+created .hm/pipeline.py (Python pipeline, template: Cmake)
+next step: run `hm run` to execute your pipeline locally
+```
+
+Then run it:
+
+```bash
+hm run ci
+```

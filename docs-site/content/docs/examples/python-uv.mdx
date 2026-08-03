@@ -1,0 +1,27 @@
+---
+title: Python (uv)
+description: "A uv-managed project: test (pytest), lint (ruff), fmt, and typecheck (mypy)."
+---
+
+A uv-managed project: test (pytest), lint (ruff), fmt, and typecheck (mypy).
+
+## Project layout
+
+<Tree path="python-uv" maxDepth={3} />
+
+## Pipeline
+
+<SdkTabs>
+  <Tab value="Python">
+<RemoteCode src="python-uv/.hm/pipeline.py" lang="python" title=".hm/pipeline.py" />
+  </Tab>
+  <Tab value="TypeScript">
+<RemoteCode src="python-uv/.hm/pipeline.ts" lang="typescript" title=".hm/pipeline.ts" />
+  </Tab>
+</SdkTabs>
+
+## Run it
+
+```bash
+hm run ci
+```

@@ -1,0 +1,49 @@
+---
+title: Configuration
+description: How hm resolves configuration — files, layering, and environment overrides.
+---
+
+`hm` builds its configuration by layering four sources, lowest precedence
+first:
+
+1. Built-in defaults.
+2. User config — `~/.config/hm/config.toml`.
+3. Project config — `<repo>/.hm/config.toml`.
+4. Environment variables, prefixed `HM_` with `__` between nested keys.
+
+Each layer overrides the one before it: a project file beats your user file,
+and an environment variable beats both. Every field is optional — omit a
+layer and the defaults stand. `hm` writes the user file with its directory
+restricted to `0700`.
+
+## Fields
+
+| Key | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `cloud.api_url` | string | `https://api.harmont.dev` | Harmont API base URL. |
+| `cloud.org` | string | _(none)_ | Active organization slug. |
+| `preferences.format` | `"human"` \| `"json"` | `"human"` | Default output format. |
+| `preferences.auto_watch` | bool | `false` | Watch a build automatically after creating it. |
+
+## Example
+
+```toml title="~/.config/hm/config.toml"
+[cloud]
+api_url = "https://api.harmont.dev"
+org = "acme"
+
+[preferences]
+format = "human"
+auto_watch = true
+```
+
+## Environment overrides
+
+Any field can be set with an `HM_`-prefixed variable, using `__` to separate
+nested keys:
+
+```bash
+export HM_CLOUD__API_URL="https://api.harmont.dev"
+export HM_CLOUD__ORG="acme"
+export HM_PREFERENCES__FORMAT="json"
+```

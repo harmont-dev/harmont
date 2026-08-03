@@ -1,0 +1,68 @@
+/* Mirrors the landing page DAG:
+   dotted-grid backdrop, 160x40 nodes with a 3px left status bar, mono
+   label + duration, --fg-dim bezier edges with arrowheads. Status is the
+   bar color; the single status channel. Static — no animation. */
+.dag {
+  /* auto inline margins center the figure when maxWidth caps it; a no-op at
+     full column width. */
+  margin: var(--sp-4) auto;
+  border: 1px solid var(--border);
+  background: var(--bg-raise);
+  overflow: hidden;
+}
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 320px;
+}
+.dot {
+  fill: var(--fg-dim);
+  opacity: 0.5;
+}
+.edge {
+  stroke: var(--fg-dim);
+  stroke-width: 1;
+  fill: none;
+}
+.arrow {
+  fill: var(--fg-dim);
+}
+.nodeBg {
+  fill: var(--bg);
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.nodeBar {
+  fill: var(--fg-muted);
+}
+.nodeName {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--fg);
+}
+.nodeDuration {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--fg-muted);
+}
+.node[data-status='passed'] .nodeBar {
+  fill: var(--ok);
+}
+.node[data-status='running'] .nodeBar {
+  fill: var(--accent);
+}
+.node[data-status='running'] .nodeBg {
+  stroke: var(--border-active);
+  stroke-width: 2;
+}
+.node[data-status='queued'] {
+  opacity: 0.4;
+}
+.caption {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 13px;
+  color: var(--fg-muted);
+}

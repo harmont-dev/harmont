@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+members = ["harmont-cloud-raw", "harmont-cloud"]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/harmont-dev/harmont"
+version = "0.1.3"
+
+[workspace.dependencies]
+reqwest = { version = "0.13", default-features = false, features = ["json", "query", "stream", "rustls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_urlencoded = "0.7"
+futures-core = "0.3"
+futures-util = "0.3"
+bytes = "1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["serde", "v4"] }
+thiserror = "2"
+tokio = { version = "1", features = ["rt", "macros", "time"] }
+eventsource-stream = "0.2"
+base64 = "0.22"

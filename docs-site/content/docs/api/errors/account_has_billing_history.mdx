@@ -1,0 +1,18 @@
+---
+title: account_has_billing_history
+description: This account can't be deleted while it has billing history.
+---
+
+<ErrorMeta code="account_has_billing_history" />
+
+## When this happens
+
+You asked to delete your account, but it carries billing history —
+redeemed coupons, coupons you created, or completed Stripe checkouts.
+Deleting the account would orphan those financial records, so the API
+refuses.
+
+## How to fix it
+
+Contact support to close an account with billing history. Support can
+reconcile or archive the records and then complete the deletion.

@@ -1,0 +1,13 @@
+node_modules
+.next
+.source
+out
+.git
+.gitignore
+README.md
+*.tsbuildinfo
+next-env.d.ts
+# IMPORTANT: do NOT ignore openapi.json -- the build needs it.
+# IMPORTANT: do NOT ignore content/docs/api/ -- we want to allow either:
+#   (a) regenerating inside the image (default), or
+#   (b) shipping pre-generated content (Task 12 fallback path).

@@ -1,0 +1,41 @@
+---
+title: Caching
+description: TTL, on-change, forever, and composed cache policies for pipeline steps.
+---
+
+Pass a cache policy to any step so its result is reused on the next run. A
+policy decides when a cached step is still valid: for a fixed window
+(`ttl`), until a tracked file changes (`on_change`), or until its command
+changes (`forever`). Compose policies to require all of them.
+
+<DslSignature name="ttl" />
+
+<DslSignature name="on_change" />
+
+<SdkTabs>
+  <Tab value="Python">
+```python
+import harmont as hm
+from datetime import timedelta
+
+deps = hm.sh(
+    "make deps",
+    cache=hm.compose(
+        hm.on_change("requirements.txt"),
+        hm.ttl(timedelta(hours=6)),
+    ),
+)
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript
+import { sh, compose, onChange, ttl } from "@harmont/hm";
+
+const deps = sh("make deps", {
+  cache: compose(onChange("requirements.txt"), ttl(6 * 60 * 60)),
+});
+```
+  </Tab>
+</SdkTabs>
+
+See the [cache reference](/pipeline-sdk/reference/cache) for every policy.

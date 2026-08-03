@@ -1,0 +1,127 @@
+syntax = "proto3";
+package harmont.agent.v1;
+
+option go_package = "ignored";
+
+// Transport: WebSocket. Each binary frame contains exactly one AgentFrame
+// (client → server) or ServerFrame (server → client) — no length prefix
+// needed since WebSocket already frames. See proto/README.md for the
+// upgrade endpoint, framing rules, and version negotiation.
+
+message AgentFrame {
+  oneof payload {
+    HelloMsg     hello       = 1;
+    LogChunk     log         = 2;
+    Heartbeat    heartbeat   = 3;
+    StateMsg     state       = 4;
+    ResumeAck    resume_ack  = 5;
+    ByeMsg       bye         = 6;
+  }
+}
+
+message HelloMsg {
+  string instance_id      = 1;
+  string agent_version    = 2;
+  uint32 proto_version    = 3;
+  string build_id         = 4;
+  string job_id           = 5;
+  uint64 last_acked_seq   = 6;
+}
+
+message LogChunk {
+  uint64 seq        = 1;
+  int64  ts_unix_ns = 2;
+  Stream stream     = 3;
+  bytes  data       = 4;
+
+  enum Stream {
+    STDOUT = 0;
+    STDERR = 1;
+    META   = 2;
+  }
+}
+
+message Heartbeat {
+  int64 ts_unix_ns = 1;
+}
+
+message StateMsg {
+  Transition transition = 1;
+  optional int32 exit_code = 2;
+  optional int32 signal    = 3;
+  optional string detail   = 4;
+
+  enum Transition {
+    UNSPECIFIED              = 0;
+    JOB_ASSIGNED_TO_SANDBOX  = 1;
+    JOB_STARTED              = 2;
+    JOB_REPORTED_PASSED      = 3;
+    JOB_REPORTED_FAILED      = 4;
+    JOB_TIMEOUT_EXPIRED      = 5;
+    JOB_SANDBOX_LOST         = 6;
+  }
+}
+
+message ResumeAck {
+  uint64 client_seq = 1;
+}
+
+message ByeMsg {
+  Reason reason = 1;
+  string detail = 2;
+
+  enum Reason {
+    CLEAN_EXIT = 0;
+    SHUTDOWN   = 1;
+    FATAL      = 2;
+  }
+}
+
+message ServerFrame {
+  oneof payload {
+    ResumeInfo  resume   = 1;
+    JobSpec     spec     = 2;
+    RangeAck    ack      = 3;
+    CancelMsg   cancel   = 4;
+    TimeoutMsg  timeout  = 5;
+    ErrorMsg    error    = 6;
+  }
+}
+
+message ResumeInfo {
+  uint64 server_max_seq = 1;
+  bool   spec_already_sent = 2;
+}
+
+message JobSpec {
+  string command          = 1;
+  map<string,string> env  = 2;
+  uint32 timeout_sec      = 3;
+  string source_url       = 4;
+  string source_sha256    = 5;
+  uint32 grace_sec        = 6;
+  uint64 max_log_bytes    = 7;
+}
+
+message RangeAck {
+  uint64 range_end = 1;
+}
+
+message CancelMsg {
+  string reason = 1;
+}
+
+message TimeoutMsg {}
+
+message ErrorMsg {
+  Code   code   = 1;
+  string detail = 2;
+
+  enum Code {
+    UNKNOWN              = 0;
+    UNAUTHORIZED         = 1;
+    JOB_NOT_FOUND        = 2;
+    JOB_ALREADY_TERMINAL = 3;
+    PROTO_INCOMPATIBLE   = 4;
+  }
+}

@@ -1,0 +1,8 @@
+A job is the unit of execution within a build — one node in the build's
+DAG, corresponding to a single `command` step. Jobs carry their own state,
+`step_key`, `command`, `exit_code`, and `depends_on` edges.
+
+These endpoints read a single job within a build and list a job's
+artifacts. Jobs are planned by the executor in topological order; you
+cannot create or cancel a job directly — operate on its
+[Build](/api/reference/builds) instead.

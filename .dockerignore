@@ -1,0 +1,36 @@
+# Build artifacts
+**/dist-newstyle
+**/.stack-work
+**/target
+**/node_modules
+**/elm-stuff
+# Elixir: never copy host-compiled artifacts or fetched deps into the build
+# context — the umbrella Dockerfile runs a clean `mix deps.get`/`mix compile`
+# under MIX_ENV=prod inside the image. Copying the host's elixir/_build (built
+# for dev/test) or elixir/deps would corrupt the prod release.
+**/_build
+**/deps
+**/cover
+**/erl_crash.dump
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+# VCS / docs / dev tooling not needed at build time
+.git
+.gitignore
+.github
+docs
+*.md
+docker-compose*.yml
+Makefile
+scripts
+
+# Editor / OS junk
+.DS_Store
+.idea
+.vscode
+*.swp
+
+# Local config / state
+.hm-dev-env

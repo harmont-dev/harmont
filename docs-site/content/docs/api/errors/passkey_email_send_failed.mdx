@@ -1,0 +1,17 @@
+---
+title: passkey_email_send_failed
+description: We could not send the verification email.
+---
+
+<ErrorMeta code="passkey_email_send_failed" />
+
+## When this happens
+
+Harmont tried to send a verification or recovery email and the upstream mail
+provider rejected or failed the send. This is a transient server-side problem,
+not something wrong with your input.
+
+## How to fix it
+
+Wait a few minutes and request the email again. If it keeps failing, contact
+support with the `request_id` from the response.

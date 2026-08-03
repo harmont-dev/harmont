@@ -1,0 +1,59 @@
+{
+  "name": "@harmont/cloud",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the Harmont cloud API — generated from the OpenAPI spec.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "harmont",
+    "ci",
+    "sdk",
+    "openapi",
+    "rest"
+  ],
+  "homepage": "https://harmont.dev",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "codegen": "openapi-ts",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run codegen && npm run build",
+    "test": "bash -O globstar -c 'node --import tsx --test --test-concurrency=1 e2e/**/*.test.ts'",
+    "e2e": "tsx e2e/run.ts",
+    "test:prod": "node --import tsx --test --test-concurrency=1 e2e/prod.test.ts"
+  },
+  "devDependencies": {
+    "@hey-api/client-fetch": "^0.13.1",
+    "@hey-api/openapi-ts": "^0.98.1",
+    "@types/node": "^22.0.0",
+    "prettier": "^3.8.3",
+    "tar": "^7.4.3",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

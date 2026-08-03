@@ -1,0 +1,5928 @@
+{
+  "components": {
+    "responses": {},
+    "schemas": {
+      "User": {
+        "description": "The authenticated Harmont user.",
+        "properties": {
+          "email": {
+            "description": "The user's email address.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name.",
+            "nullable": true,
+            "type": "string"
+          },
+          "uuid": {
+            "description": "Stable user id.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "email"
+        ],
+        "title": "User",
+        "type": "object"
+      },
+      "Pipeline": {
+        "description": "A repeatable CI workflow belonging to an organization.",
+        "properties": {
+          "allow_manual": {
+            "description": "Whether manual (e.g. `hm run`) builds are permitted.",
+            "type": "boolean"
+          },
+          "created_at": {
+            "description": "When the pipeline was created.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "default_branch": {
+            "description": "The branch built by default.",
+            "type": "string"
+          },
+          "description": {
+            "description": "Optional human description.",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name.",
+            "type": "string"
+          },
+          "repo_name": {
+            "description": "The pipeline's repo as `owner/repo` \u2014 from the mirrored GitHub repo when known, else parsed from the clone URL. `null` when unknown.",
+            "nullable": true,
+            "type": "string"
+          },
+          "repository": {
+            "description": "The source repository this pipeline builds.",
+            "type": "string"
+          },
+          "slug": {
+            "description": "URL-safe slug, unique within the organization. Derived from the name.",
+            "type": "string"
+          },
+          "visibility": {
+            "description": "Whether the pipeline is private or public.",
+            "enum": [
+              "private",
+              "public"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "repository",
+          "default_branch",
+          "visibility",
+          "allow_manual",
+          "created_at"
+        ],
+        "title": "Pipeline",
+        "type": "object"
+      },
+      "CreateBuildRequest": {
+        "description": "Creates a build for a pipeline. Two paths: supply pre-rendered v0 IR JSON in `pipeline_ir` (the `hm run` / API path), or omit `pipeline_ir` to have the engine render the registered pipeline's IR in a sandbox VM (decision #5 \u2014 rendering never happens on the API host). The IR is then parsed and planned in-process; on a plan/render rejection the build row is created with its error fields set and the request returns 422.",
+        "properties": {
+          "branch": {
+            "description": "Source branch.",
+            "type": "string"
+          },
+          "commit": {
+            "description": "Source commit SHA.",
+            "type": "string"
+          },
+          "env": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Build-level environment variables.",
+            "nullable": true,
+            "type": "object"
+          },
+          "message": {
+            "description": "Optional build/commit message.",
+            "nullable": true,
+            "type": "string"
+          },
+          "pipeline_ir": {
+            "description": "The pre-rendered v0 IR JSON the engine materialises into jobs. When absent/blank the engine renders the pipeline's IR in a sandbox VM instead.",
+            "nullable": true,
+            "type": "string"
+          },
+          "source": {
+            "description": "How the build was triggered (e.g. `api`, `ui`). Defaults to `api`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_b64": {
+            "description": "Base64-encoded source tarball (expected to be gzipped; the API validates only that it is valid base64, not the archive format) \u2014 the `hm run` local-code upload path. When present, the API stores it at the build's key and derives the internal, runner-token-authenticated `source_url`; it takes precedence over any caller-supplied `source_url`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_sha256": {
+            "description": "SHA-256 of the source archive, verified by the sandbox before rendering (in-sandbox-render path). Defaults to empty when omitted.",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_url": {
+            "description": "URL to the build's source archive, fetched by the sandbox. Ignored when `source_b64` is supplied (the API derives this internally).",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "branch",
+          "commit"
+        ],
+        "title": "CreateBuildRequest",
+        "type": "object"
+      },
+      "BitbucketWorkspace": {
+        "description": "A connected Bitbucket workspace.",
+        "example": {
+          "name": "Acme Inc",
+          "slug": "acme"
+        },
+        "properties": {
+          "name": {
+            "description": "Display name of the workspace.",
+            "type": "string"
+          },
+          "slug": {
+            "description": "Unique workspace slug.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug"
+        ],
+        "title": "BitbucketWorkspace",
+        "type": "object"
+      },
+      "OrgMember": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "owner",
+              "admin",
+              "member"
+            ],
+            "type": "string"
+          },
+          "user_uuid": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_uuid",
+          "email",
+          "role"
+        ],
+        "title": "OrgMember",
+        "type": "object"
+      },
+      "RecoverOptionsRequest": {
+        "description": "Validates a magic-link token (without consuming it) and returns WebAuthn credential-creation options to enroll a fresh passkey.",
+        "properties": {
+          "magic_link_token": {
+            "description": "The raw token from the recovery email.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "magic_link_token"
+        ],
+        "title": "RecoverOptionsRequest",
+        "type": "object"
+      },
+      "Transaction": {
+        "description": "One append-only ledger entry \u2014 a credit (positive) or debit (negative).",
+        "properties": {
+          "amount_cents": {
+            "description": "Signed amount in cents: positive for credits, negative for debits.",
+            "type": "integer"
+          },
+          "created_at": {
+            "description": "When the entry was recorded.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "description": "Optional human-readable note.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "description": "The entry's id.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "source": {
+            "description": "What produced the entry.",
+            "enum": [
+              "stripe_topup",
+              "coupon_redemption",
+              "admin_grant",
+              "vm_lease_debit",
+              "refund"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "amount_cents",
+          "source",
+          "created_at"
+        ],
+        "title": "Transaction",
+        "type": "object"
+      },
+      "CliClaimRequest": {
+        "description": "The CLI polls with its nonce to claim the session token the SPA transferred.",
+        "example": {
+          "nonce": "a7Kp...random"
+        },
+        "properties": {
+          "nonce": {
+            "description": "The nonce the CLI generated for this loopback handoff.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nonce"
+        ],
+        "title": "CliClaimRequest",
+        "type": "object"
+      },
+      "UsageBreakdownJob": {
+        "description": "A single job's VM lease: the VM that ran it, its shape, how long it ran, and what it cost.",
+        "properties": {
+          "amount_cents": {
+            "description": "The debit for this lease, in cents (negative).",
+            "type": "integer"
+          },
+          "cpu_count": {
+            "description": "vCPUs leased.",
+            "type": "integer"
+          },
+          "disk_gb": {
+            "description": "GB of disk leased.",
+            "type": "integer"
+          },
+          "duration_seconds": {
+            "description": "Lease duration in seconds (null while still running).",
+            "nullable": true,
+            "type": "integer"
+          },
+          "finished_at": {
+            "description": "When the lease finished (null if still running).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "job_id": {
+            "description": "The job's id.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "job_name": {
+            "description": "The job's human-readable name.",
+            "nullable": true,
+            "type": "string"
+          },
+          "memory_gb": {
+            "description": "GB of RAM leased.",
+            "type": "integer"
+          },
+          "started_at": {
+            "description": "When the lease started.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "step_key": {
+            "description": "The job's DAG step key.",
+            "nullable": true,
+            "type": "string"
+          },
+          "vm_handle": {
+            "description": "The backend VM identifier that ran the job.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cpu_count",
+          "memory_gb",
+          "disk_gb",
+          "amount_cents",
+          "started_at"
+        ],
+        "title": "UsageBreakdownJob",
+        "type": "object"
+      },
+      "BitbucketRepoList": {
+        "description": "Bitbucket repositories visible within the requested workspace.",
+        "example": {
+          "repos": []
+        },
+        "properties": {
+          "repos": {
+            "description": "The repositories.",
+            "items": {
+              "$ref": "#/components/schemas/BitbucketRepo"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "repos"
+        ],
+        "title": "BitbucketRepoList",
+        "type": "object"
+      },
+      "RepoRegistration": {
+        "description": "A single registration channel for a repository. `provider` is the channel the repo was connected through: `github` (the GitHub App), `bitbucket` (Bitbucket OAuth), or `cli` (reserved for direct CLI registration \u2014 not yet emitted). `account` is the connecting account/workspace login.",
+        "properties": {
+          "account": {
+            "description": "The account/workspace login the repo was registered under.",
+            "type": "string"
+          },
+          "provider": {
+            "description": "The registration channel: `github`, `bitbucket`, or `cli`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "account"
+        ],
+        "title": "RepoRegistration",
+        "type": "object"
+      },
+      "AuthGithubRequest": {
+        "description": "GitHub OAuth callback payload from the SPA.",
+        "example": {
+          "code": "abc123def456"
+        },
+        "properties": {
+          "code": {
+            "description": "The authorization code returned by GitHub to the SPA.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "AuthGithubRequest",
+        "type": "object"
+      },
+      "GithubInstallation": {
+        "description": "A GitHub App installation the organization has connected. The numeric `installation_id` is GitHub's installation id (used to address sync/unbind), while `id` is Harmont's internal row id.",
+        "properties": {
+          "account_login": {
+            "description": "The GitHub account (org or user) the App is installed on.",
+            "type": "string"
+          },
+          "account_type": {
+            "description": "`Organization` or `User`.",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "When the installation row was first mirrored.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "Harmont's internal installation row id.",
+            "type": "integer"
+          },
+          "installation_id": {
+            "description": "GitHub's numeric installation id.",
+            "type": "integer"
+          },
+          "updated_at": {
+            "description": "When the installation row was last updated.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "installation_id",
+          "account_login",
+          "account_type",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "GithubInstallation",
+        "type": "object"
+      },
+      "PasskeyChallengeResponse": {
+        "description": "The server-side challenge id (correlate it on finalize) and the PublicKeyCredential*Options the browser WebAuthn API consumes.",
+        "properties": {
+          "challenge_id": {
+            "description": "Opaque id of the stored, single-use challenge. Echo it back on finalize.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": true,
+            "description": "The PublicKeyCredentialCreationOptions / RequestOptions for the browser.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "options"
+        ],
+        "title": "PasskeyChallengeResponse",
+        "type": "object"
+      },
+      "UsageSeriesResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/UsageSeriesBucket"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "UsageSeriesResponse",
+        "type": "object"
+      },
+      "JobList": {
+        "description": "A build's jobs, in DAG creation order.",
+        "properties": {
+          "data": {
+            "description": "The build's jobs.",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "JobList",
+        "type": "object"
+      },
+      "PasskeyRegisterFinalizeRequest": {
+        "description": "Completes adding a passkey by submitting the attestation for the challenge.",
+        "properties": {
+          "attestation": {
+            "additionalProperties": true,
+            "description": "The WebAuthn attestation response from navigator.credentials.create.",
+            "type": "object"
+          },
+          "challenge_id": {
+            "description": "The challenge id returned by the register-options call.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nickname": {
+            "description": "Optional human label for the new passkey.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "attestation"
+        ],
+        "title": "PasskeyRegisterFinalizeRequest",
+        "type": "object"
+      },
+      "TokenResponse": {
+        "description": "A freshly minted session bearer token.",
+        "properties": {
+          "token": {
+            "description": "The raw session bearer token. Send it as `Authorization: Bearer <token>`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "TokenResponse",
+        "type": "object"
+      },
+      "CliTokenResponse": {
+        "description": "The raw session bearer token handed to the CLI.",
+        "properties": {
+          "token": {
+            "description": "The raw session bearer token. Send it as `Authorization: Bearer <token>`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "CliTokenResponse",
+        "type": "object"
+      },
+      "Error": {
+        "description": "The Harmont error envelope.",
+        "properties": {
+          "error": {
+            "properties": {
+              "code": {
+                "description": "Catalog code.",
+                "type": "string"
+              },
+              "doc_url": {
+                "description": "Docs link for this error.",
+                "type": "string"
+              },
+              "message": {
+                "description": "Human-readable message.",
+                "type": "string"
+              },
+              "request_id": {
+                "description": "Correlates with server logs/traces.",
+                "type": "string"
+              },
+              "type": {
+                "description": "Stable machine error type.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "code",
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "Error",
+        "type": "object"
+      },
+      "UsageBreakdownBuild": {
+        "description": "All VM usage attributed to one build, rolled up and broken down per job.",
+        "properties": {
+          "build_external_id": {
+            "description": "The build's public external id.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "build_id": {
+            "description": "The build's id (null for leases with no build).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "build_number": {
+            "description": "The per-pipeline build number.",
+            "nullable": true,
+            "type": "integer"
+          },
+          "finished_at": {
+            "description": "Latest finish among the build's completed leases (null only if no lease has finished yet).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "job_count": {
+            "description": "Number of job leases in the build.",
+            "type": "integer"
+          },
+          "jobs": {
+            "description": "Per-job leases, oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/UsageBreakdownJob"
+            },
+            "type": "array"
+          },
+          "pipeline_id": {
+            "description": "The pipeline's id.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "pipeline_name": {
+            "description": "The pipeline's name.",
+            "nullable": true,
+            "type": "string"
+          },
+          "pipeline_slug": {
+            "description": "The pipeline's routing slug (for linking).",
+            "nullable": true,
+            "type": "string"
+          },
+          "started_at": {
+            "description": "Earliest lease start in the build.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "total_cents": {
+            "description": "Sum of this build's lease debits, in cents (negative).",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_cents",
+          "started_at",
+          "job_count",
+          "jobs"
+        ],
+        "title": "UsageBreakdownBuild",
+        "type": "object"
+      },
+      "RecoverFinalizeRequest": {
+        "description": "Completes recovery: consumes the magic-link token + challenge, registers a new passkey, and mints a session token.",
+        "properties": {
+          "attestation": {
+            "additionalProperties": true,
+            "description": "The WebAuthn attestation response from navigator.credentials.create.",
+            "type": "object"
+          },
+          "challenge_id": {
+            "description": "The challenge id returned by the recover-options call.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "magic_link_token": {
+            "description": "The raw recovery token (consumed here).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "magic_link_token",
+          "challenge_id",
+          "attestation"
+        ],
+        "title": "RecoverFinalizeRequest",
+        "type": "object"
+      },
+      "BitbucketRepo": {
+        "description": "A Bitbucket repository visible to the connected OAuth token.",
+        "example": {
+          "clone_url": "https://bitbucket.org/acme/widget.git",
+          "default_branch": "main",
+          "full_name": "acme/widget",
+          "name": "widget",
+          "private": true
+        },
+        "properties": {
+          "clone_url": {
+            "description": "HTTPS clone URL.",
+            "nullable": true,
+            "type": "string"
+          },
+          "default_branch": {
+            "description": "Default branch name.",
+            "nullable": true,
+            "type": "string"
+          },
+          "full_name": {
+            "description": "Workspace-qualified repo name, e.g. `acme/widget`.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Repository slug.",
+            "type": "string"
+          },
+          "private": {
+            "description": "Whether the repository is private.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "full_name",
+          "name"
+        ],
+        "title": "BitbucketRepo",
+        "type": "object"
+      },
+      "RedeemCouponResponse": {
+        "description": "The credit granted by the coupon and the organization's resulting balance, both in cents.",
+        "properties": {
+          "balance_cents": {
+            "description": "The organization's balance after the credit, in cents.",
+            "type": "integer"
+          },
+          "credit_cents": {
+            "description": "The credit granted by the coupon, in cents.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "credit_cents",
+          "balance_cents"
+        ],
+        "title": "RedeemCouponResponse",
+        "type": "object"
+      },
+      "BuildList": {
+        "description": "A page of a pipeline's builds (newest first), with an opaque cursor.",
+        "properties": {
+          "data": {
+            "description": "The builds on this page, newest first.",
+            "items": {
+              "$ref": "#/components/schemas/Build"
+            },
+            "type": "array"
+          },
+          "next_cursor": {
+            "description": "Opaque cursor for the next page. Pass it as the `cursor` query parameter; `null` when there are no more pages.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "next_cursor"
+        ],
+        "title": "BuildList",
+        "type": "object"
+      },
+      "InviteList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Invite"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "InviteList",
+        "type": "object"
+      },
+      "UpdateMemberRoleRequest": {
+        "properties": {
+          "role": {
+            "enum": [
+              "owner",
+              "admin",
+              "member"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "UpdateMemberRoleRequest",
+        "type": "object"
+      },
+      "CliRedeemRequest": {
+        "description": "The CLI redeems a paste code the user typed in, receiving the session token.",
+        "example": {
+          "code": "K7P2QR9MX3WZ4NTV"
+        },
+        "properties": {
+          "code": {
+            "description": "The paste code shown by the SPA.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "CliRedeemRequest",
+        "type": "object"
+      },
+      "ConnectInstallationRequest": {
+        "description": "Binds an existing GitHub App installation (identified by its GitHub numeric installation id) to this organization.",
+        "properties": {
+          "installation_id": {
+            "description": "GitHub's numeric installation id to bind.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "installation_id"
+        ],
+        "title": "ConnectInstallationRequest",
+        "type": "object"
+      },
+      "PasskeyRegisterOptionsResponse": {
+        "description": "WebAuthn credential-creation options for adding a passkey to the current user, plus the server-side challenge id to echo back on finalize. `excludeCredentials` lists the user's already-registered authenticators.",
+        "properties": {
+          "challenge_id": {
+            "description": "Opaque id of the stored, single-use challenge. Echo it back on finalize.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": true,
+            "description": "The PublicKeyCredentialCreationOptions for the browser.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "options"
+        ],
+        "title": "PasskeyRegisterOptionsResponse",
+        "type": "object"
+      },
+      "RecoverBeginRequest": {
+        "description": "Starts magic-link account recovery. Always 204 (never leaks account existence).",
+        "example": {
+          "email": "alice@harmont.dev"
+        },
+        "properties": {
+          "email": {
+            "description": "The email to recover access for.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "RecoverBeginRequest",
+        "type": "object"
+      },
+      "ApiTokenListResponse": {
+        "description": "Every personal API key belonging to the current user.",
+        "properties": {
+          "api_tokens": {
+            "description": "The user's personal API keys.",
+            "items": {
+              "$ref": "#/components/schemas/ApiToken"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "api_tokens"
+        ],
+        "title": "ApiTokenListResponse",
+        "type": "object"
+      },
+      "Build": {
+        "description": "One run of a pipeline, identified by its pipeline-scoped number.",
+        "properties": {
+          "branch": {
+            "description": "Source branch.",
+            "nullable": true,
+            "type": "string"
+          },
+          "commit": {
+            "description": "Source commit SHA.",
+            "nullable": true,
+            "type": "string"
+          },
+          "created_at": {
+            "description": "When the build row was created.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "error_code": {
+            "description": "Stable build-level error code, if the build failed at the build level.",
+            "nullable": true,
+            "type": "string"
+          },
+          "error_message": {
+            "description": "Human-readable build-level error message, if any.",
+            "nullable": true,
+            "type": "string"
+          },
+          "finished_at": {
+            "description": "When the build reached a terminal state.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "message": {
+            "description": "Commit/build message.",
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "description": "The build's number, sequential and unique within its pipeline.",
+            "type": "integer"
+          },
+          "pipeline_slug": {
+            "description": "The global slug of the pipeline this build belongs to.",
+            "type": "string"
+          },
+          "scheduled_at": {
+            "description": "When the build was queued.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "source": {
+            "description": "How the build was triggered (e.g. `api`, `webhook`, `ui`).",
+            "nullable": true,
+            "type": "string"
+          },
+          "started_at": {
+            "description": "When the build started running.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "state": {
+            "description": "The rolled-up build state.",
+            "enum": [
+              "scheduled",
+              "running",
+              "failing",
+              "passed",
+              "failed",
+              "canceling",
+              "canceled"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "number",
+          "state",
+          "pipeline_slug",
+          "created_at"
+        ],
+        "title": "Build",
+        "type": "object"
+      },
+      "GithubRepoList": {
+        "description": "Mirrored repositories for an installation or across an organization.",
+        "properties": {
+          "data": {
+            "description": "The mirrored repositories.",
+            "items": {
+              "$ref": "#/components/schemas/GithubRepo"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "GithubRepoList",
+        "type": "object"
+      },
+      "TransactionList": {
+        "description": "A page of an organization's ledger entries (newest first), with an opaque cursor.",
+        "properties": {
+          "data": {
+            "description": "The ledger entries on this page, newest first.",
+            "items": {
+              "$ref": "#/components/schemas/Transaction"
+            },
+            "type": "array"
+          },
+          "next_cursor": {
+            "description": "Opaque cursor for the next page. Pass it as the `cursor` query parameter; `null` when there are no more pages.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "next_cursor"
+        ],
+        "title": "TransactionList",
+        "type": "object"
+      },
+      "PasskeyListResponse": {
+        "description": "Every passkey registered to the current user.",
+        "properties": {
+          "passkeys": {
+            "description": "The user's registered passkeys.",
+            "items": {
+              "$ref": "#/components/schemas/Passkey"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "passkeys"
+        ],
+        "title": "PasskeyListResponse",
+        "type": "object"
+      },
+      "CreateOrganizationRequest": {
+        "description": "Create a new organization owned by the authenticated user.",
+        "properties": {
+          "name": {
+            "description": "Display name. The slug is derived from this.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "url": {
+            "description": "Optional website URL.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CreateOrganizationRequest",
+        "type": "object"
+      },
+      "CreatePipelineRequest": {
+        "description": "Creates a pipeline within an organization. The slug is derived from the name; a slug collision within the organization is rejected.",
+        "properties": {
+          "default_branch": {
+            "description": "The branch built by default.",
+            "type": "string"
+          },
+          "description": {
+            "description": "Optional human description.",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name.",
+            "type": "string"
+          },
+          "repo_name": {
+            "description": "Optional `owner/repo` label. When omitted it is derived from `repository`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "repository": {
+            "description": "The source repository this pipeline builds.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "repository",
+          "default_branch"
+        ],
+        "title": "CreatePipelineRequest",
+        "type": "object"
+      },
+      "CreateRepoBuildRequest": {
+        "description": "Creates a build by addressing the pipeline through its repo-natural identity \u2014 `repo_name` (`owner/repo`) plus `source_slug` (the in-repo `@hm.pipeline(\"\u2026\")` name) \u2014 rather than the org-global slug. This is the `hm run` path: a repo-local client knows its git remote and its pipeline name but not the namespaced slug. Build semantics are otherwise identical to `createBuild`.",
+        "properties": {
+          "branch": {
+            "description": "Source branch.",
+            "type": "string"
+          },
+          "commit": {
+            "description": "Source commit SHA.",
+            "type": "string"
+          },
+          "env": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Build-level environment variables.",
+            "nullable": true,
+            "type": "object"
+          },
+          "message": {
+            "description": "Optional build/commit message.",
+            "nullable": true,
+            "type": "string"
+          },
+          "pipeline_ir": {
+            "description": "The pre-rendered v0 IR JSON the engine materialises into jobs. When absent/blank the engine renders the pipeline's IR in a sandbox VM instead.",
+            "nullable": true,
+            "type": "string"
+          },
+          "repo_name": {
+            "description": "The worktree's repository as `owner/repo` (from its git remote).",
+            "type": "string"
+          },
+          "source": {
+            "description": "How the build was triggered (e.g. `api`, `ui`). Defaults to `api`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_b64": {
+            "description": "Base64-encoded source tarball (the `hm run` local-code upload). When present, the API stores it at the build's key and derives the internal, runner-token-authenticated `source_url`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_slug": {
+            "description": "The in-repo pipeline name \u2014 the `@hm.pipeline(\"\u2026\")` slug.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "repo_name",
+          "source_slug",
+          "branch",
+          "commit"
+        ],
+        "title": "CreateRepoBuildRequest",
+        "type": "object"
+      },
+      "UsageBreakdownResponse": {
+        "description": "An organization's VM usage over a window, grouped by build (newest first).",
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/UsageBreakdownBuild"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "UsageBreakdownResponse",
+        "type": "object"
+      },
+      "CliCodeResponse": {
+        "description": "A short, human-typeable code the user re-types into the CLI.",
+        "example": {
+          "code": "K7P2QR9MX3WZ4NTV"
+        },
+        "properties": {
+          "code": {
+            "description": "The single-use paste code. Valid for five minutes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "CliCodeResponse",
+        "type": "object"
+      },
+      "AuthTokenResponse": {
+        "description": "A freshly minted session bearer token and the authenticated user.",
+        "properties": {
+          "token": {
+            "description": "The raw session bearer token. Send it as `Authorization: Bearer <token>`.",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "required": [
+          "token",
+          "user"
+        ],
+        "title": "AuthTokenResponse",
+        "type": "object"
+      },
+      "BitbucketOAuthUrlResponse": {
+        "description": "The Bitbucket authorize URL the SPA should open.",
+        "example": {
+          "url": "https://bitbucket.org/site/oauth2/authorize?client_id=...&response_type=code"
+        },
+        "properties": {
+          "url": {
+            "description": "Bitbucket OAuth authorize URL.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "BitbucketOAuthUrlResponse",
+        "type": "object"
+      },
+      "PasskeySignupFinalizeRequest": {
+        "description": "Completes passkey sign-up by submitting the attestation for the challenge.",
+        "properties": {
+          "attestation": {
+            "additionalProperties": true,
+            "description": "The WebAuthn attestation response from navigator.credentials.create.",
+            "type": "object"
+          },
+          "challenge_id": {
+            "description": "The challenge id returned by the options call.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "verification_token": {
+            "description": "The raw verification token (consumed here).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "verification_token",
+          "attestation"
+        ],
+        "title": "PasskeySignupFinalizeRequest",
+        "type": "object"
+      },
+      "AuthGoogleRequest": {
+        "description": "Google OAuth callback payload from the SPA.",
+        "example": {
+          "code": "4/0Afg...",
+          "redirect_uri": "https://app.harmont.dev/auth/google/callback"
+        },
+        "properties": {
+          "code": {
+            "description": "The authorization code returned by Google to the SPA.",
+            "type": "string"
+          },
+          "redirect_uri": {
+            "description": "The redirect URI the SPA used; must match the OAuth client config.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "redirect_uri"
+        ],
+        "title": "AuthGoogleRequest",
+        "type": "object"
+      },
+      "LogTokenResponse": {
+        "description": "A build-scoped HMAC token the SSE log stream accepts, plus its expiry. Pass the token as the `token` query parameter when opening the log stream.",
+        "properties": {
+          "expires_at": {
+            "description": "When the token expires (~1 hour out).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "token": {
+            "description": "The opaque, build-scoped log token.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "expires_at"
+        ],
+        "title": "LogTokenResponse",
+        "type": "object"
+      },
+      "UserUpdateRequest": {
+        "description": "Updates the current user's editable profile fields.",
+        "example": {
+          "name": "Ada Lovelace"
+        },
+        "properties": {
+          "name": {
+            "description": "New display name.",
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "UserUpdateRequest",
+        "type": "object"
+      },
+      "PasskeySignupBeginRequest": {
+        "description": "Starts passkey sign-up: runs the access gate and emails a verification link.",
+        "example": {
+          "email": "alice@harmont.dev",
+          "name": "Alice"
+        },
+        "properties": {
+          "email": {
+            "description": "The email to sign up with.",
+            "type": "string"
+          },
+          "name": {
+            "description": "The new user's display name.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "name"
+        ],
+        "title": "PasskeySignupBeginRequest",
+        "type": "object"
+      },
+      "CurrentUserResponse": {
+        "description": "The authenticated Harmont user and their personal-org slug.",
+        "properties": {
+          "email": {
+            "description": "The user's email address.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name.",
+            "nullable": true,
+            "type": "string"
+          },
+          "personal_org_slug": {
+            "description": "Slug of the user's personal organization.",
+            "nullable": true,
+            "type": "string"
+          },
+          "uuid": {
+            "description": "Stable user id.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "email"
+        ],
+        "title": "CurrentUserResponse",
+        "type": "object"
+      },
+      "Job": {
+        "description": "One job (DAG node) of a build.",
+        "properties": {
+          "command": {
+            "description": "The shell command the job runs.",
+            "nullable": true,
+            "type": "string"
+          },
+          "created_at": {
+            "description": "When the job row was created.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "depends_on": {
+            "description": "Ids of this job's prerequisite jobs (its DAG in-edges), spanning both `depends_on` and `builds_in` dependency kinds. Empty when the job has no prerequisites.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "error_code": {
+            "description": "Stable job-level error code, if the job failed.",
+            "nullable": true,
+            "type": "string"
+          },
+          "error_message": {
+            "description": "Human-readable job-level error message, if any.",
+            "nullable": true,
+            "type": "string"
+          },
+          "exit_code": {
+            "description": "The command's exit status, once finished.",
+            "nullable": true,
+            "type": "integer"
+          },
+          "finished_at": {
+            "description": "When the job reached a terminal state.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "description": "The job's id.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "description": "Human-readable job name.",
+            "nullable": true,
+            "type": "string"
+          },
+          "retry_policy": {
+            "additionalProperties": true,
+            "description": "The job's retry policy, if any.",
+            "nullable": true,
+            "type": "object"
+          },
+          "soft_fail_policy": {
+            "additionalProperties": true,
+            "description": "The job's soft-fail policy, if any.",
+            "nullable": true,
+            "type": "object"
+          },
+          "soft_failed": {
+            "description": "Whether the job failed but the build was allowed to continue.",
+            "type": "boolean"
+          },
+          "started_at": {
+            "description": "When the job started running.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "state": {
+            "description": "The job's FSM state.",
+            "enum": [
+              "pending",
+              "scheduled",
+              "assigned",
+              "running",
+              "passed",
+              "failed",
+              "skipped",
+              "canceling",
+              "canceled",
+              "timing_out",
+              "timed_out"
+            ],
+            "type": "string"
+          },
+          "step_key": {
+            "description": "The job's stable key within the build's DAG.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "soft_failed",
+          "depends_on",
+          "created_at"
+        ],
+        "title": "Job",
+        "type": "object"
+      },
+      "CliTransferRequest": {
+        "description": "The SPA hands a fresh session token to a locally-running CLI that generated `nonce` and is polling the claim endpoint.",
+        "example": {
+          "nonce": "a7Kp...random"
+        },
+        "properties": {
+          "nonce": {
+            "description": "The opaque nonce the CLI generated and is polling claim with.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nonce"
+        ],
+        "title": "CliTransferRequest",
+        "type": "object"
+      },
+      "Organization": {
+        "description": "A Harmont organization the authenticated user is a member of.",
+        "properties": {
+          "created_at": {
+            "description": "When the organization was created.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name.",
+            "type": "string"
+          },
+          "slug": {
+            "description": "URL-safe unique slug identifying the organization.",
+            "type": "string"
+          },
+          "url": {
+            "description": "The organization's website, if set.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "created_at"
+        ],
+        "title": "Organization",
+        "type": "object"
+      },
+      "UsageSeriesBucket": {
+        "properties": {
+          "cpu_seconds": {
+            "type": "integer"
+          },
+          "date": {
+            "description": "Bucket day (UTC).",
+            "format": "date",
+            "type": "string"
+          },
+          "disk_gb_seconds": {
+            "type": "integer"
+          },
+          "memory_gb_seconds": {
+            "type": "integer"
+          },
+          "total_cents": {
+            "description": "Rate-card cost for the day, in cents.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "cpu_seconds",
+          "memory_gb_seconds",
+          "disk_gb_seconds",
+          "total_cents"
+        ],
+        "title": "UsageSeriesBucket",
+        "type": "object"
+      },
+      "PipelineList": {
+        "description": "A page of an organization's pipelines, with an opaque cursor.",
+        "properties": {
+          "data": {
+            "description": "The pipelines on this page.",
+            "items": {
+              "$ref": "#/components/schemas/Pipeline"
+            },
+            "type": "array"
+          },
+          "next_cursor": {
+            "description": "Opaque cursor for the next page. Pass it as the `cursor` query parameter; `null` when there are no more pages.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "next_cursor"
+        ],
+        "title": "PipelineList",
+        "type": "object"
+      },
+      "RepoSummaryList": {
+        "description": "All repositories visible to the organization, across all providers.",
+        "properties": {
+          "data": {
+            "description": "The repositories.",
+            "items": {
+              "$ref": "#/components/schemas/RepoSummary"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "RepoSummaryList",
+        "type": "object"
+      },
+      "GithubRepo": {
+        "description": "A repository Harmont mirrors from a connected GitHub installation. `installation_id` is Harmont's internal installation row id (FK), not GitHub's installation id.",
+        "properties": {
+          "clone_url": {
+            "description": "HTTPS clone URL.",
+            "type": "string"
+          },
+          "default_branch": {
+            "description": "Default branch name.",
+            "type": "string"
+          },
+          "full_name": {
+            "description": "`owner/name` GitHub full name.",
+            "type": "string"
+          },
+          "gh_repo_id": {
+            "description": "GitHub's numeric repo id.",
+            "type": "integer"
+          },
+          "id": {
+            "description": "Harmont's internal repo row id.",
+            "type": "integer"
+          },
+          "installation_id": {
+            "description": "FK onto the internal installation row id.",
+            "type": "integer"
+          },
+          "last_synced_at": {
+            "description": "When the repo was last synced from GitHub.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "description": "Short repo name.",
+            "type": "string"
+          },
+          "owner": {
+            "description": "GitHub owner login.",
+            "type": "string"
+          },
+          "private": {
+            "description": "Whether the repo is private.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "installation_id",
+          "gh_repo_id",
+          "full_name",
+          "name",
+          "owner",
+          "clone_url",
+          "default_branch",
+          "private"
+        ],
+        "title": "GithubRepo",
+        "type": "object"
+      },
+      "PasskeyLoginOptionsRequest": {
+        "description": "Starts a discoverable-credential (passkey) login. No fields required.",
+        "properties": {},
+        "title": "PasskeyLoginOptionsRequest",
+        "type": "object"
+      },
+      "StripeWebhookResponse": {
+        "description": "Acknowledges that a Stripe webhook event verified and was recorded (idempotently). Returned for any verified event \u2014 handled or not \u2014 so Stripe stops retrying.",
+        "properties": {
+          "status": {
+            "description": "Always `\"ok\"` on a verified, recorded event.",
+            "enum": [
+              "ok"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "StripeWebhookResponse",
+        "type": "object"
+      },
+      "ConnectBitbucketResponse": {
+        "description": "The workspaces connected by the OAuth callback, plus the org slug.",
+        "example": {
+          "org": "acme",
+          "workspaces": [
+            {
+              "name": "Acme Inc",
+              "slug": "acme"
+            }
+          ]
+        },
+        "properties": {
+          "org": {
+            "description": "The org slug the workspaces were connected to, recovered from the signed OAuth state. The SPA navigates to this org's repos view.",
+            "type": "string"
+          },
+          "workspaces": {
+            "description": "The connected workspaces.",
+            "items": {
+              "$ref": "#/components/schemas/BitbucketWorkspace"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "workspaces",
+          "org"
+        ],
+        "title": "ConnectBitbucketResponse",
+        "type": "object"
+      },
+      "UsageResponse": {
+        "description": "Aggregated VM-lease usage for an organization over the requested `[from, to)` window: resource-seconds per dimension and the total billed cost in cents.",
+        "properties": {
+          "cpu_seconds": {
+            "description": "\u03a3 (cpu_count \u00d7 duration_seconds) over leases in the window.",
+            "type": "integer"
+          },
+          "disk_gb_seconds": {
+            "description": "\u03a3 (disk_gb \u00d7 duration_seconds) over leases in the window.",
+            "type": "integer"
+          },
+          "memory_gb_seconds": {
+            "description": "\u03a3 (memory_gb \u00d7 duration_seconds) over leases in the window.",
+            "type": "integer"
+          },
+          "total_cents": {
+            "description": "\u03a3 rate-card cost of the leases in the window, in cents.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cpu_seconds",
+          "memory_gb_seconds",
+          "disk_gb_seconds",
+          "total_cents"
+        ],
+        "title": "UsageResponse",
+        "type": "object"
+      },
+      "ApiToken": {
+        "description": "A personal API key. The secret is returned only once, at creation.",
+        "properties": {
+          "created_at": {
+            "description": "When the key was created.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "description": "Human label for the key.",
+            "nullable": true,
+            "type": "string"
+          },
+          "expires_at": {
+            "description": "When the key expires, or null if it never expires.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "description": "Stable key id.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "last_used_at": {
+            "description": "When the key was last used to authenticate, if ever.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created_at"
+        ],
+        "title": "ApiToken",
+        "type": "object"
+      },
+      "Invite": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "member"
+            ],
+            "type": "string"
+          },
+          "token": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "expires_at"
+        ],
+        "title": "Invite",
+        "type": "object"
+      },
+      "CheckoutRequest": {
+        "description": "Starts a Stripe Checkout Session crediting the organization identified by the path (`:org`). The body carries only the top-up amount in cents.",
+        "properties": {
+          "amount_cents": {
+            "description": "The credit top-up amount in cents. Must be a positive integer within the supported bounds (100\u20131,000,000).",
+            "maximum": 1000000,
+            "minimum": 100,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "amount_cents"
+        ],
+        "title": "CheckoutRequest",
+        "type": "object"
+      },
+      "PasskeyLoginFinalizeRequest": {
+        "description": "Completes passkey login by submitting the assertion for the challenge.",
+        "properties": {
+          "assertion": {
+            "additionalProperties": true,
+            "description": "The WebAuthn assertion response from navigator.credentials.get.",
+            "type": "object"
+          },
+          "challenge_id": {
+            "description": "The challenge id returned by the login-options call.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "assertion"
+        ],
+        "title": "PasskeyLoginFinalizeRequest",
+        "type": "object"
+      },
+      "CheckoutResponse": {
+        "description": "The hosted Stripe Checkout URL. Redirect the customer here to complete the top-up; on success Stripe fires a webhook that posts the matching credit.",
+        "properties": {
+          "checkout_url": {
+            "description": "The hosted Stripe Checkout Session URL.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "checkout_url"
+        ],
+        "title": "CheckoutResponse",
+        "type": "object"
+      },
+      "RepoSummary": {
+        "description": "A repository visible to the organization, identified by its canonical clone URL. One logical repository may be registered through several channels (e.g. the GitHub App and the CLI); each appears in `registrations`.",
+        "properties": {
+          "clone_url": {
+            "description": "HTTPS clone URL (may be null for some providers).",
+            "nullable": true,
+            "type": "string"
+          },
+          "default_branch": {
+            "description": "Default branch name.",
+            "nullable": true,
+            "type": "string"
+          },
+          "full_name": {
+            "description": "`owner/name` full name.",
+            "type": "string"
+          },
+          "last_synced_at": {
+            "description": "Most recent sync across this repo's registrations.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "description": "Short repo name.",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Owner/namespace login.",
+            "type": "string"
+          },
+          "private": {
+            "description": "Whether the repo is private.",
+            "type": "boolean"
+          },
+          "registrations": {
+            "description": "Every channel through which this repo is registered.",
+            "items": {
+              "$ref": "#/components/schemas/RepoRegistration"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "full_name",
+          "name",
+          "owner",
+          "private",
+          "registrations"
+        ],
+        "title": "RepoSummary",
+        "type": "object"
+      },
+      "ApiTokenCreateResponse": {
+        "description": "The created key and its raw secret. The secret is shown only here, once.",
+        "properties": {
+          "api_token": {
+            "$ref": "#/components/schemas/ApiToken"
+          },
+          "token": {
+            "description": "The raw API key secret. Store it now; it is never shown again.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "api_token"
+        ],
+        "title": "ApiTokenCreateResponse",
+        "type": "object"
+      },
+      "OrgMemberList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/OrgMember"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "OrgMemberList",
+        "type": "object"
+      },
+      "PasskeySignupOptionsRequest": {
+        "description": "Exchanges a verification token for WebAuthn credential-creation options.",
+        "properties": {
+          "verification_token": {
+            "description": "The raw token from the verification email.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "verification_token"
+        ],
+        "title": "PasskeySignupOptionsRequest",
+        "type": "object"
+      },
+      "BalanceResponse": {
+        "description": "The organization's current balance \u2014 the sum of every ledger entry (credits positive, debits negative). May be negative.",
+        "properties": {
+          "balance_cents": {
+            "description": "Current balance in cents (credits \u2212 debits). May be negative.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "balance_cents"
+        ],
+        "title": "BalanceResponse",
+        "type": "object"
+      },
+      "ApiTokenCreateRequest": {
+        "description": "Creates a personal API key.",
+        "example": {
+          "description": "Laptop CLI",
+          "expires_at": null
+        },
+        "properties": {
+          "description": {
+            "description": "Human label for the key.",
+            "type": "string"
+          },
+          "expires_at": {
+            "description": "Optional expiry; null or omitted means the key never expires.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "ApiTokenCreateRequest",
+        "type": "object"
+      },
+      "CreateInviteRequest": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "member"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ],
+        "title": "CreateInviteRequest",
+        "type": "object"
+      },
+      "GithubInstallationList": {
+        "description": "The organization's connected GitHub App installations.",
+        "properties": {
+          "data": {
+            "description": "The connected installations.",
+            "items": {
+              "$ref": "#/components/schemas/GithubInstallation"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "GithubInstallationList",
+        "type": "object"
+      },
+      "BitbucketWorkspaceList": {
+        "description": "All Bitbucket workspaces the connected OAuth token can access.",
+        "example": {
+          "workspaces": [
+            {
+              "name": "Acme Inc",
+              "slug": "acme"
+            }
+          ]
+        },
+        "properties": {
+          "workspaces": {
+            "description": "The connected workspaces.",
+            "items": {
+              "$ref": "#/components/schemas/BitbucketWorkspace"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "workspaces"
+        ],
+        "title": "BitbucketWorkspaceList",
+        "type": "object"
+      },
+      "Passkey": {
+        "description": "A WebAuthn credential registered to the current user.",
+        "properties": {
+          "aaguid": {
+            "description": "The authenticator's AAGUID (model identifier), if reported.",
+            "nullable": true,
+            "type": "string"
+          },
+          "created_at": {
+            "description": "When the passkey was registered.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "last_used_at": {
+            "description": "When the passkey was last used to authenticate, if ever.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "nickname": {
+            "description": "Human label for the passkey.",
+            "nullable": true,
+            "type": "string"
+          },
+          "uuid": {
+            "description": "Stable passkey id.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "created_at"
+        ],
+        "title": "Passkey",
+        "type": "object"
+      },
+      "OrganizationList": {
+        "description": "A page of the current user's organizations, with an opaque cursor.",
+        "properties": {
+          "data": {
+            "description": "The organizations on this page.",
+            "items": {
+              "$ref": "#/components/schemas/Organization"
+            },
+            "type": "array"
+          },
+          "next_cursor": {
+            "description": "Opaque cursor for the next page. Pass it as the `cursor` query parameter; `null` when there are no more pages.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "next_cursor"
+        ],
+        "title": "OrganizationList",
+        "type": "object"
+      },
+      "RedeemCouponRequest": {
+        "description": "Redeems a coupon for the organization identified by the path. The org is taken from the route (`:org`); the body carries only the coupon code.",
+        "properties": {
+          "code": {
+            "description": "The coupon code to redeem.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "RedeemCouponRequest",
+        "type": "object"
+      },
+      "ConnectBitbucketRequest": {
+        "description": "OAuth callback payload from the SPA.",
+        "example": {
+          "code": "abc123",
+          "state": "SFMyNTY..."
+        },
+        "properties": {
+          "code": {
+            "description": "Authorization code from Bitbucket.",
+            "type": "string"
+          },
+          "state": {
+            "description": "The signed CSRF state nonce echoed back by Bitbucket on the callback. Issued by the `oauth-url` endpoint and bound to the authenticated user.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "state"
+        ],
+        "title": "ConnectBitbucketRequest",
+        "type": "object"
+      },
+      "AcceptInviteRequest": {
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "AcceptInviteRequest",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "description": "A Harmont session bearer token.",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "runnerToken": {
+        "description": "A build's single-issue runner token, presented as `Authorization: Bearer <runner_token>`. Used only by the in-VM agent for the internal source-archive endpoint; validated against the build's stored hash (non-consuming).",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Harmont's user-facing REST authentication API.",
+    "title": "Harmont API",
+    "version": "0"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v0/organizations/{org}/invites/{id}": {
+      "delete": {
+        "callbacks": {},
+        "operationId": "revokeInvite",
+        "parameters": [
+          {
+            "description": "",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke a pending invite",
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v0/auth/recover/finalize": {
+      "post": {
+        "callbacks": {},
+        "description": "Consumes the magic link + challenge, registers a fresh passkey, and returns a session token.",
+        "operationId": "recoverFinalize",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoverFinalizeRequest"
+              }
+            }
+          },
+          "description": "Finalize request",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            },
+            "description": "Session token + user"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid token, challenge, or attestation"
+          }
+        },
+        "summary": "Finalize account recovery",
+        "tags": [
+          "auth"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/organizations/{org}/github/installations/{id}": {
+      "delete": {
+        "callbacks": {},
+        "description": "Unbinds the installation (by GitHub numeric id) from this organization. Idempotent: a 204 is returned whether or not the installation was bound to this organization.",
+        "operationId": "disconnectGithubInstallation",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The GitHub numeric installation id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Disconnected"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization for this user"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Disconnect a GitHub installation from the organization",
+        "tags": [
+          "github"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/organizations/{org}/bitbucket/workspaces/{id}/repos": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the synced repositories for one Bitbucket workspace, scoped to this organization. A workspace owned by another organization (or unknown) yields 404.",
+        "operationId": "listBitbucketRepos",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The Bitbucket workspace slug.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BitbucketRepoList"
+                }
+              }
+            },
+            "description": "The workspace's repositories"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization or workspace"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List repositories for a connected workspace",
+        "tags": [
+          "bitbucket"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/integrations/bitbucket/connect": {
+      "post": {
+        "callbacks": {},
+        "description": "Completes the OAuth callback from the static `/bitbucket/setup` page. Recovers the org from the signed `state`, re-checks membership, exchanges the authorization `code`, binds every workspace the token can access to that org (skipping any already connected to a different org), and syncs their repositories. The response carries the org slug so the SPA can navigate to the org-scoped repos view. Yields 403 when the state is missing/expired/forged or the org is no longer the user's; 409 when every accessible workspace is already connected to another org; 502 if the OAuth exchange fails upstream.",
+        "operationId": "connectBitbucket",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectBitbucketRequest"
+              }
+            }
+          },
+          "description": "The OAuth callback payload",
+          "required": false
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectBitbucketResponse"
+                }
+              }
+            },
+            "description": "The connected workspaces"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "The OAuth state was missing, expired, or invalid"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Every accessible workspace is connected to another organization"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "The Bitbucket OAuth exchange failed"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Connect Bitbucket workspaces to the organization",
+        "tags": [
+          "bitbucket"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/auth/cli/claim": {
+      "post": {
+        "callbacks": {},
+        "description": "The CLI polls with the nonce it generated; on a match within the 60s window it receives the raw session token (single-use).",
+        "operationId": "cliClaim",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CliClaimRequest"
+              }
+            }
+          },
+          "description": "Claim request",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliTokenResponse"
+                }
+              }
+            },
+            "description": "The session token"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No token available for this nonce"
+          }
+        },
+        "summary": "Claim a transferred session token (CLI loopback poll)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v0/organizations/{org}/repos": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns every repository visible to the organization, regardless of VCS provider, grouped by canonical clone URL. Each row lists every channel the repo is registered through in `registrations`.",
+        "operationId": "listOrgRepos",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepoSummaryList"
+                }
+              }
+            },
+            "description": "The organization's repositories"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization for this user"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the organization's repositories across all providers",
+        "tags": [
+          "repos"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/organizations/{org}/pipelines/{pipeline}/builds/{number}/jobs": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the build's jobs in DAG creation order.",
+        "operationId": "listJobs",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The pipeline slug.",
+            "in": "path",
+            "name": "pipeline",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The build number.",
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobList"
+                }
+              }
+            },
+            "description": "The build's jobs"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such build in this pipeline"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a build's jobs",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v0/user/passkeys": {
+      "get": {
+        "callbacks": {},
+        "operationId": "listPasskeys",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyListResponse"
+                }
+              }
+            },
+            "description": "The user's passkeys"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the current user's passkeys",
+        "tags": [
+          "user"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/auth/passkey/login/finalize": {
+      "post": {
+        "callbacks": {},
+        "description": "Verifies the assertion against the resolved credential, advances the sign-counter, and returns a session token.",
+        "operationId": "passkeyLoginFinalize",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyLoginFinalizeRequest"
+              }
+            }
+          },
+          "description": "Login finalize request",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "description": "Session token"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid challenge / assertion / unknown credential"
+          }
+        },
+        "summary": "Finalize passkey login",
+        "tags": [
+          "auth"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/internal/builds/{build_uuid}/source.tar.gz": {
+      "get": {
+        "callbacks": {},
+        "description": "Streams the gzipped source tarball uploaded for a build to the in-VM sandbox/agent. Authenticated with the build's runner token via `Authorization: Bearer <runner_token>` (NOT a session bearer token); the token is validated against the build's stored hash with a constant-time compare and is NOT consumed.",
+        "operationId": "getBuildSource",
+        "parameters": [
+          {
+            "description": "The build's external id (UUID).",
+            "in": "path",
+            "name": "build_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/gzip": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "The gzipped source archive"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Missing or invalid runner token"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such build, or no source archive"
+          }
+        },
+        "security": [
+          {
+            "runnerToken": []
+          }
+        ],
+        "summary": "Serve a build's source archive (runner-token auth)",
+        "tags": [
+          "builds"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/auth/github": {
+      "post": {
+        "callbacks": {},
+        "description": "Exchanges a GitHub authorization code for a Harmont session token, creating the user and their personal org on first sign-in.",
+        "operationId": "authGithub",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthGithubRequest"
+              }
+            }
+          },
+          "description": "GitHub OAuth callback",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            },
+            "description": "Session token + user"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Sign-up failed"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "GitHub rejected the code"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Platform at capacity"
+          }
+        },
+        "summary": "Sign in with GitHub",
+        "tags": [
+          "auth"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/auth/logout": {
+      "post": {
+        "callbacks": {},
+        "description": "Revokes the bearer token used for this request. The token can no longer be used to authenticate. Idempotent.",
+        "operationId": "logout",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Token revoked"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Log out (revoke the current bearer token)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v0/organizations/{org}/bitbucket/workspaces/{id}": {
+      "delete": {
+        "callbacks": {},
+        "description": "Tombstones the workspace's installation for this organization. A workspace owned by another organization (or unknown) yields 404.",
+        "operationId": "disconnectBitbucket",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The Bitbucket workspace slug.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Disconnected"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization or workspace"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Disconnect a Bitbucket workspace from the organization",
+        "tags": [
+          "bitbucket"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/organizations/{org}/github/installations/{id}/repos": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the mirrored repositories for one installation, scoped to this organization. An installation bound to another organization (or unknown) yields an empty list.",
+        "operationId": "listGithubInstallationRepos",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The GitHub numeric installation id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GithubRepoList"
+                }
+              }
+            },
+            "description": "The installation's repositories"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization for this user"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List repositories for a connected installation",
+        "tags": [
+          "github"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/organizations/{org}/github/installations": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the organization's connected, non-deleted GitHub App installations.",
+        "operationId": "listGithubInstallations",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GithubInstallationList"
+                }
+              }
+            },
+            "description": "The connected installations"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization for this user"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List connected GitHub installations",
+        "tags": [
+          "github"
+        ],
+        "x-internal": true
+      },
+      "post": {
+        "callbacks": {},
+        "description": "Binds an existing GitHub App installation (by GitHub numeric id) to this organization. The installation must already be mirrored from a prior `installation.created` webhook. Binding an installation that is connected to a different organization yields 409; an unknown installation yields 404.",
+        "operationId": "connectGithubInstallation",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectInstallationRequest"
+              }
+            }
+          },
+          "description": "The GitHub installation to connect",
+          "required": false
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GithubInstallation"
+                }
+              }
+            },
+            "description": "The connected installation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization, or no such installation"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "The installation is connected to another organization"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Missing or invalid installation_id"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Connect a GitHub installation to the organization",
+        "tags": [
+          "github"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/auth/passkey/signup/options": {
+      "post": {
+        "callbacks": {},
+        "description": "Validates the verification token and returns WebAuthn credential-creation options plus the server-side challenge id to echo back on finalize.",
+        "operationId": "passkeySignupOptions",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeySignupOptionsRequest"
+              }
+            }
+          },
+          "description": "Options request",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyChallengeResponse"
+                }
+              }
+            },
+            "description": "Creation options + challenge id"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid or expired token"
+          }
+        },
+        "summary": "Get passkey sign-up creation options",
+        "tags": [
+          "auth"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/organizations/{org}/members": {
+      "get": {
+        "callbacks": {},
+        "operationId": "listOrgMembers",
+        "parameters": [
+          {
+            "description": "",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgMemberList"
+                }
+              }
+            },
+            "description": "Members"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such org for this user"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List organization members",
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v0/invites/accept": {
+      "post": {
+        "callbacks": {},
+        "operationId": "acceptInvite",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteRequest"
+              }
+            }
+          },
+          "description": "Token",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            },
+            "description": "The joined organization"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invite cannot be accepted"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept an invite",
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v0/auth/passkey/register/options": {
+      "post": {
+        "callbacks": {},
+        "description": "Returns WebAuthn credential-creation options for the current user, excluding their already-registered credentials, plus the challenge id.",
+        "operationId": "passkeyRegisterOptions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyRegisterOptionsResponse"
+                }
+              }
+            },
+            "description": "Creation options + challenge id"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Missing or invalid bearer token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get options to add a passkey",
+        "tags": [
+          "auth"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/user/api-tokens": {
+      "get": {
+        "callbacks": {},
+        "operationId": "listApiTokens",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTokenListResponse"
+                }
+              }
+            },
+            "description": "The user's API keys"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the current user's API keys",
+        "tags": [
+          "user"
+        ]
+      },
+      "post": {
+        "callbacks": {},
+        "description": "Returns the raw secret in the response body. It is shown only once and cannot be retrieved later.",
+        "operationId": "createApiToken",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiTokenCreateRequest"
+              }
+            }
+          },
+          "description": "Create request",
+          "required": false
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTokenCreateResponse"
+                }
+              }
+            },
+            "description": "The created key and its one-time secret"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a personal API key",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/api/v0/auth/passkey/signup/finalize": {
+      "post": {
+        "callbacks": {},
+        "description": "Verifies the attestation, consumes the verification token, creates the user + passkey, and returns a session token.",
+        "operationId": "passkeySignupFinalize",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeySignupFinalizeRequest"
+              }
+            }
+          },
+          "description": "Finalize request",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            },
+            "description": "Session token + user"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid challenge or token"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Email already registered"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Platform at capacity"
+          }
+        },
+        "summary": "Finalize passkey sign-up",
+        "tags": [
+          "auth"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/auth/cli/transfer": {
+      "post": {
+        "callbacks": {},
+        "description": "Mints a fresh session token for the current user and parks it under the CLI-supplied nonce for 60 seconds. The CLI claims it via the claim endpoint.",
+        "operationId": "cliTransfer",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CliTransferRequest"
+              }
+            }
+          },
+          "description": "Transfer request",
+          "required": false
+        },
+        "responses": {
+          "204": {
+            "description": "Token parked for the CLI to claim"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Hand a session token to a locally-running CLI (loopback)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v0/billing/transactions/{org}": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the organization's ledger entries, newest first, cursor-paginated.",
+        "operationId": "listBillingTransactions",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size (1\u2013100, default 50).",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Opaque cursor from a previous page's `next_cursor`.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionList"
+                }
+              }
+            },
+            "description": "The organization's ledger entries"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List an organization's ledger entries",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v0/organizations/{org}/pipelines/{pipeline}/builds": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the pipeline's builds, newest first, paginated.",
+        "operationId": "listBuilds",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The pipeline slug.",
+            "in": "path",
+            "name": "pipeline",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size (1\u2013100, default 50).",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Opaque cursor from a previous page's `next_cursor`.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildList"
+                }
+              }
+            },
+            "description": "The pipeline's builds"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization or pipeline"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a pipeline's builds",
+        "tags": [
+          "builds"
+        ]
+      },
+      "post": {
+        "callbacks": {},
+        "description": "Creates a build for the pipeline and starts execution in-process. When `pipeline_ir` is supplied the IR is materialised directly; when it is absent the engine renders the pipeline's IR in a sandbox VM first (rendering never happens on the API host). A manual build against a pipeline that disallows manual builds yields 403; an IR that fails to render/parse/plan yields 422 (the build row is created with its error fields set).",
+        "operationId": "createBuild",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The pipeline slug.",
+            "in": "path",
+            "name": "pipeline",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBuildRequest"
+              }
+            }
+          },
+          "description": "Build attributes",
+          "required": false
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Build"
+                }
+              }
+            },
+            "description": "The created build"
+          },
+          "402": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "The organization's balance is exhausted"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Manual builds are disabled for this pipeline"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization or pipeline"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "The pipeline IR was rejected"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a build",
+        "tags": [
+          "builds"
+        ]
+      }
+    },
+    "/api/v0/auth/cli/redeem": {
+      "post": {
+        "callbacks": {},
+        "description": "The CLI submits the paste code the user typed in; on a match within the 5m window it receives the raw session token (single-use).",
+        "operationId": "cliRedeem",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CliRedeemRequest"
+              }
+            }
+          },
+          "description": "Redeem request",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliTokenResponse"
+                }
+              }
+            },
+            "description": "The session token"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid or expired paste code"
+          }
+        },
+        "summary": "Redeem a CLI paste code for a session token",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v0/organizations/{org}/pipelines/{pipeline}/builds/{number}/log-token": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns a short-lived (~1 hour) HMAC token the SSE log stream accepts, scoped to this build. Pass it as the stream's `token` query parameter.",
+        "operationId": "getBuildLogToken",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The pipeline slug.",
+            "in": "path",
+            "name": "pipeline",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The build number.",
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogTokenResponse"
+                }
+              }
+            },
+            "description": "The log token and its expiry"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such build in this pipeline"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mint a build-scoped log token",
+        "tags": [
+          "builds"
+        ]
+      }
+    },
+    "/api/v0/organizations/{org}/bitbucket/oauth-url": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the Bitbucket authorize URL the SPA should open to start the OAuth consent flow. The signed `state` carries this org so the static callback can recover it server-side. Yields 503 when Bitbucket integration is not configured on this server.",
+        "operationId": "bitbucketOAuthUrl",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BitbucketOAuthUrlResponse"
+                }
+              }
+            },
+            "description": "The Bitbucket authorize URL"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization for this user"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Bitbucket integration is not configured"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the Bitbucket OAuth authorize URL",
+        "tags": [
+          "bitbucket"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/organizations/{org}/pipelines/{pipeline}/builds/{number}/jobs/{job_id}": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns a single job within the build. A `job_id` that belongs to another build is reported as 404.",
+        "operationId": "getJob",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The pipeline slug.",
+            "in": "path",
+            "name": "pipeline",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The build number.",
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The job id.",
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            },
+            "description": "The job"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such job in this build"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a job",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v0/organizations/{org}/github/installations/{id}/sync": {
+      "post": {
+        "callbacks": {},
+        "description": "Triggers a live sync: lists the installation's repositories from GitHub and reconciles the mirror. Returns the installation. The installation must be connected to this organization.",
+        "operationId": "syncGithubInstallation",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The GitHub numeric installation id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GithubInstallation"
+                }
+              }
+            },
+            "description": "The synced installation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization, or no such installation"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "GitHub integration is not configured / reachable"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sync a connected installation's repositories",
+        "tags": [
+          "github"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/auth/passkey/signup/begin": {
+      "post": {
+        "callbacks": {},
+        "description": "Checks capacity and emails a verification link; 503 when at capacity (never reveals whether the email already has an account).",
+        "operationId": "passkeySignupBegin",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeySignupBeginRequest"
+              }
+            }
+          },
+          "description": "Sign-up request",
+          "required": false
+        },
+        "responses": {
+          "204": {
+            "description": "Verification email sent"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Platform at capacity"
+          }
+        },
+        "summary": "Begin passkey sign-up",
+        "tags": [
+          "auth"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/auth/google": {
+      "post": {
+        "callbacks": {},
+        "description": "Exchanges a Google authorization code for a Harmont session token, creating the user and their personal org on first sign-in.",
+        "operationId": "authGoogle",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthGoogleRequest"
+              }
+            }
+          },
+          "description": "Google OAuth callback",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            },
+            "description": "Session token + user"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Sign-up failed"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Google rejected the code"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Platform at capacity"
+          }
+        },
+        "summary": "Sign in with Google",
+        "tags": [
+          "auth"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/auth/cli/code": {
+      "post": {
+        "callbacks": {},
+        "description": "Mints a fresh session token for the current user and a short paste code (valid 5 minutes) the user re-types into the CLI to redeem it.",
+        "operationId": "cliCode",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliCodeResponse"
+                }
+              }
+            },
+            "description": "The paste code"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mint a human-typeable CLI paste code",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v0/billing/usage/{org}/breakdown": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the organization's VM usage over the half-open `[from, to)` window (both ISO-8601), grouped by build (newest first) and broken down per job lease \u2014 pipeline, build number, job, VM handle, resource shape, duration and cost \u2014 so a charge can be traced to its source.",
+        "operationId": "getBillingUsageBreakdown",
+        "parameters": [
+          {
+            "description": "Organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "ISO-8601 window start (inclusive).",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "ISO-8601 window end (exclusive).",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageBreakdownResponse"
+                }
+              }
+            },
+            "description": "Per-build usage breakdown"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid window"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Per-build VM usage breakdown",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v0/organizations/{org}/pipelines/{pipeline}/builds/{number}/cancel": {
+      "put": {
+        "callbacks": {},
+        "description": "Cancels an in-flight build in-process (transitions non-terminal jobs and tears down their sandboxes). Idempotent: cancelling an already-terminal build is a no-op. Returns the reloaded build with its updated state.",
+        "operationId": "cancelBuild",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The pipeline slug.",
+            "in": "path",
+            "name": "pipeline",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The build number.",
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Build"
+                }
+              }
+            },
+            "description": "The cancelled build"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such build in this pipeline"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a build",
+        "tags": [
+          "builds"
+        ]
+      }
+    },
+    "/api/v0/organizations": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the organizations the authenticated user is a member of, paginated.",
+        "operationId": "listOrganizations",
+        "parameters": [
+          {
+            "description": "Page size (1\u2013100, default 50).",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Opaque cursor from a previous page's `next_cursor`.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationList"
+                }
+              }
+            },
+            "description": "The user's organizations"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the current user's organizations",
+        "tags": [
+          "organizations"
+        ]
+      },
+      "post": {
+        "callbacks": {},
+        "description": "Creates a new organization with the authenticated user as its owner.",
+        "operationId": "createOrganization",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganizationRequest"
+              }
+            }
+          },
+          "description": "Organization to create",
+          "required": false
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            },
+            "description": "The created organization"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid organization attributes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create an organization",
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v0/billing/checkout/{org}": {
+      "post": {
+        "callbacks": {},
+        "description": "Creates a Stripe Checkout Session crediting the organization identified by the path (`:org`) and returns the hosted checkout URL to redirect the customer to. The body carries only the top-up `amount_cents` (a positive integer within supported bounds). The credit itself is posted asynchronously when Stripe fires the matching webhook.",
+        "operationId": "createCheckout",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutRequest"
+              }
+            }
+          },
+          "description": "The top-up amount",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResponse"
+                }
+              }
+            },
+            "description": "The hosted Stripe Checkout URL"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid top-up amount"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "The billing provider is unavailable"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Billing is not configured"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a Stripe Checkout Session for a credit top-up",
+        "tags": [
+          "billing"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/organizations/{org}/invites": {
+      "get": {
+        "callbacks": {},
+        "operationId": "listInvites",
+        "parameters": [
+          {
+            "description": "",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteList"
+                }
+              }
+            },
+            "description": "Invites"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List pending invites",
+        "tags": [
+          "organizations"
+        ]
+      },
+      "post": {
+        "callbacks": {},
+        "operationId": "createInvite",
+        "parameters": [
+          {
+            "description": "",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInviteRequest"
+              }
+            }
+          },
+          "description": "Invite",
+          "required": false
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invite"
+                }
+              }
+            },
+            "description": "The created invite (with token)"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Insufficient role"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid or duplicate invite"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invite an email to the organization",
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v0/auth/recover/options": {
+      "post": {
+        "callbacks": {},
+        "description": "Validates the magic-link token (without consuming it) and returns WebAuthn credential-creation options plus the challenge id to echo back on finalize.",
+        "operationId": "recoverOptions",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoverOptionsRequest"
+              }
+            }
+          },
+          "description": "Options request",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyChallengeResponse"
+                }
+              }
+            },
+            "description": "Creation options + challenge id"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid or expired token"
+          }
+        },
+        "summary": "Get recovery passkey-creation options",
+        "tags": [
+          "auth"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/stripe/webhook": {
+      "post": {
+        "callbacks": {},
+        "description": "Receives a Stripe webhook event and, for `checkout.session.completed`, posts the matching credit to the organization's ledger and marks the checkout session complete. **Not** bearer-authenticated: the request is authenticated by Stripe's `Stripe-Signature` header, verified against the raw request body and the endpoint's webhook signing secret. Credit posting is idempotent \u2014 replaying the same event id posts the credit only once. Returns 200 for any verified event (handled or not) so Stripe stops retrying; a signature failure returns 400.",
+        "operationId": "stripeWebhook",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StripeWebhookResponse"
+                }
+              }
+            },
+            "description": "The event was verified and recorded"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "The Stripe signature did not verify"
+          }
+        },
+        "security": [],
+        "summary": "Receive a Stripe webhook event",
+        "tags": [
+          "billing"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/user": {
+      "delete": {
+        "callbacks": {},
+        "operationId": "deleteCurrentUser",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Account deleted"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Account has billing history"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete the current user's account",
+        "tags": [
+          "user"
+        ]
+      },
+      "get": {
+        "callbacks": {},
+        "description": "Returns the bearer-authenticated user and their personal-organization slug.",
+        "operationId": "getCurrentUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            },
+            "description": "The current user"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the current authenticated user",
+        "tags": [
+          "user"
+        ]
+      },
+      "patch": {
+        "callbacks": {},
+        "operationId": "updateCurrentUser",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdateRequest"
+              }
+            }
+          },
+          "description": "Profile update",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            },
+            "description": "The updated user"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid name"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update the current user's display name",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/api/v0/organizations/{org}/bitbucket/workspaces": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the organization's connected, non-deleted Bitbucket workspaces.",
+        "operationId": "listBitbucketWorkspaces",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BitbucketWorkspaceList"
+                }
+              }
+            },
+            "description": "The connected workspaces"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization for this user"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List connected Bitbucket workspaces",
+        "tags": [
+          "bitbucket"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/organizations/{org}/members/{user_id}": {
+      "delete": {
+        "callbacks": {},
+        "operationId": "removeOrgMember",
+        "parameters": [
+          {
+            "description": "",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Insufficient role"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Member not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Cannot remove the last owner"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a member",
+        "tags": [
+          "organizations"
+        ]
+      },
+      "patch": {
+        "callbacks": {},
+        "operationId": "updateOrgMember",
+        "parameters": [
+          {
+            "description": "",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMemberRoleRequest"
+              }
+            }
+          },
+          "description": "New role",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgMember"
+                }
+              }
+            },
+            "description": "Updated member"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Insufficient role"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Member not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Cannot demote the last owner"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid role value"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a member's role",
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v0/organizations/{org}/pipelines": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the organization's non-archived pipelines, paginated. A slug the user cannot access is reported as 404.",
+        "operationId": "listPipelines",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size (1\u2013100, default 50).",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Opaque cursor from a previous page's `next_cursor`.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineList"
+                }
+              }
+            },
+            "description": "The organization's pipelines"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization for this user"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List an organization's pipelines",
+        "tags": [
+          "pipelines"
+        ]
+      },
+      "post": {
+        "callbacks": {},
+        "description": "Creates a pipeline in the organization. The slug is derived from the name; a colliding slug within the organization yields 422.",
+        "operationId": "createPipeline",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePipelineRequest"
+              }
+            }
+          },
+          "description": "Pipeline attributes",
+          "required": false
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pipeline"
+                }
+              }
+            },
+            "description": "The created pipeline"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization for this user"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Validation failed (e.g. slug already taken)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a pipeline",
+        "tags": [
+          "pipelines"
+        ]
+      }
+    },
+    "/api/v0/ping": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns `{\"status\": \"ok\"}` if the API is up. No auth required.",
+        "operationId": "ping",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "example": "ok",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Service is up"
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": [
+          "meta"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/user/passkeys/{uuid}": {
+      "delete": {
+        "callbacks": {},
+        "description": "Removes the passkey. Refused with 409 `passkey_last_credential` when it would leave the account with no passkeys. A passkey belonging to another user is 404.",
+        "operationId": "deletePasskey",
+        "parameters": [
+          {
+            "description": "The passkey id.",
+            "in": "path",
+            "name": "uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Passkey deleted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such passkey for this user"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Cannot delete the last passkey"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete one of the current user's passkeys",
+        "tags": [
+          "user"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/organizations/{org}": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the organization identified by the path slug. A slug that does not exist or that the user is not a member of is reported as 404.",
+        "operationId": "getOrganization",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            },
+            "description": "The organization"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization for this user"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an organization",
+        "tags": [
+          "organizations"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/auth/recover/begin": {
+      "post": {
+        "callbacks": {},
+        "description": "Emails a magic-link to the address if it maps to an account. Always returns 204 (never reveals whether the email has an account).",
+        "operationId": "recoverBegin",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoverBeginRequest"
+              }
+            }
+          },
+          "description": "Recovery request",
+          "required": false
+        },
+        "responses": {
+          "204": {
+            "description": "Recovery email sent (if the account exists)"
+          }
+        },
+        "summary": "Begin account recovery",
+        "tags": [
+          "auth"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/organizations/{org}/builds": {
+      "post": {
+        "callbacks": {},
+        "description": "Creates a build by addressing the pipeline through its repo-natural identity (`repo_name` + `source_slug`) rather than the org-global slug. This is the `hm run` path. Resolution, manual-build gating, billing, and IR handling are otherwise identical to `createBuild`. A repo/source slug that matches no pipeline yields 404.",
+        "operationId": "createBuildBySource",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRepoBuildRequest"
+              }
+            }
+          },
+          "description": "Build attributes",
+          "required": false
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Build"
+                }
+              }
+            },
+            "description": "The created build"
+          },
+          "402": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "The organization's balance is exhausted"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Manual builds are disabled for this pipeline"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No pipeline for that repo + source slug"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "The pipeline IR was rejected"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a build by repo + source slug",
+        "tags": [
+          "builds"
+        ]
+      }
+    },
+    "/api/v0/organizations/{org}/pipelines/{pipeline}/builds/{number}": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the build identified by its pipeline-scoped number. An unknown number (or one in another pipeline) is reported as 404.",
+        "operationId": "getBuild",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The pipeline slug.",
+            "in": "path",
+            "name": "pipeline",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The build number.",
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Build"
+                }
+              }
+            },
+            "description": "The build"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such build in this pipeline"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a build",
+        "tags": [
+          "builds"
+        ]
+      }
+    },
+    "/api/v0/billing/usage/{org}": {
+      "get": {
+        "callbacks": {},
+        "description": "Aggregates the organization's VM-lease usage over the half-open window `[from, to)` (both ISO-8601 timestamps): resource-seconds per dimension and the total billed cost in cents. Both `from` and `to` are required.",
+        "operationId": "getBillingUsage",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Window start (inclusive), ISO-8601.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Window end (exclusive), ISO-8601.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageResponse"
+                }
+              }
+            },
+            "description": "The usage aggregates"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Missing or invalid time window"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an organization's VM usage",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v0/organizations/{org}/pipelines/{pipeline}": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the pipeline identified by the path slug within the organization. An unknown slug (or one in another organization) is reported as 404.",
+        "operationId": "getPipeline",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The pipeline slug.",
+            "in": "path",
+            "name": "pipeline",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pipeline"
+                }
+              }
+            },
+            "description": "The pipeline"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such pipeline in this organization"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a pipeline",
+        "tags": [
+          "pipelines"
+        ]
+      }
+    },
+    "/api/v0/auth/passkey/register/finalize": {
+      "post": {
+        "callbacks": {},
+        "description": "Verifies the attestation against the register challenge and stores the new passkey for the current user.",
+        "operationId": "passkeyRegisterFinalize",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyRegisterFinalizeRequest"
+              }
+            }
+          },
+          "description": "Finalize request",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Passkey"
+                }
+              }
+            },
+            "description": "The newly registered passkey"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid challenge or attestation"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Missing or invalid bearer token"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "This authenticator is already registered"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Finalize adding a passkey",
+        "tags": [
+          "auth"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/user/api-tokens/{id}": {
+      "delete": {
+        "callbacks": {},
+        "operationId": "revokeApiToken",
+        "parameters": [
+          {
+            "description": "The API key id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Key revoked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such key for this user"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke one of the current user's API keys",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/api/v0/billing/balance/{org}": {
+      "get": {
+        "callbacks": {},
+        "description": "Returns the organization's current balance in cents \u2014 the sum of every ledger entry (credits positive, debits negative). May be negative.",
+        "operationId": "getBillingBalance",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceResponse"
+                }
+              }
+            },
+            "description": "The organization's balance"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an organization's balance",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v0/auth/passkey/login/options": {
+      "post": {
+        "callbacks": {},
+        "description": "Starts a discoverable-credential login: returns WebAuthn request options with an empty allow-list plus the server-side challenge id.",
+        "operationId": "passkeyLoginOptions",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyLoginOptionsRequest"
+              }
+            }
+          },
+          "description": "Login options request",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyChallengeResponse"
+                }
+              }
+            },
+            "description": "Request options + challenge id"
+          }
+        },
+        "summary": "Get passkey login options",
+        "tags": [
+          "auth"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/billing/coupon/redeem/{org}": {
+      "post": {
+        "callbacks": {},
+        "description": "Redeems a coupon code for the organization identified by the path, crediting the org and returning the credit and resulting balance. The org is taken from the route; the body carries only the coupon `code`. Idempotent per org: a second redemption of the same coupon returns `409 coupon_already_claimed`.",
+        "operationId": "redeemCoupon",
+        "parameters": [
+          {
+            "description": "The organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedeemCouponRequest"
+              }
+            }
+          },
+          "description": "The coupon to redeem",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedeemCouponResponse"
+                }
+              }
+            },
+            "description": "The credit granted and resulting balance"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization or coupon"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "The coupon was already redeemed by this org"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "The coupon is expired or exhausted"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Redeem a coupon for an organization",
+        "tags": [
+          "billing"
+        ],
+        "x-internal": true
+      }
+    },
+    "/api/v0/billing/usage/{org}/series": {
+      "get": {
+        "callbacks": {},
+        "operationId": "getBillingUsageSeries",
+        "parameters": [
+          {
+            "description": "Organization slug.",
+            "in": "path",
+            "name": "org",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "ISO-8601 window start (inclusive).",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "ISO-8601 window end (exclusive).",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageSeriesResponse"
+                }
+              }
+            },
+            "description": "Per-day usage buckets"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "No such organization"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid window"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Per-day usage time-series",
+        "tags": [
+          "billing"
+        ]
+      }
+    }
+  },
+  "security": [],
+  "servers": [
+    {
+      "url": "https://api.harmont.dev",
+      "variables": {}
+    }
+  ],
+  "tags": [
+    {
+      "name": "auth"
+    },
+    {
+      "name": "billing"
+    },
+    {
+      "name": "bitbucket"
+    },
+    {
+      "name": "builds"
+    },
+    {
+      "name": "github"
+    },
+    {
+      "name": "jobs"
+    },
+    {
+      "name": "meta"
+    },
+    {
+      "name": "organizations"
+    },
+    {
+      "name": "pipelines"
+    },
+    {
+      "name": "repos"
+    },
+    {
+      "name": "user"
+    }
+  ]
+}

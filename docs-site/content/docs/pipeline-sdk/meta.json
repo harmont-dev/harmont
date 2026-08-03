@@ -1,0 +1,12 @@
+{
+  "title": "Pipeline SDK",
+  "pages": [
+    "index",
+    "chains",
+    "toolchains",
+    "patterns",
+    "caching",
+    "triggers",
+    "reference"
+  ]
+}

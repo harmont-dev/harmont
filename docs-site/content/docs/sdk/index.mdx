@@ -1,0 +1,54 @@
+---
+title: Cloud SDK
+description: A typed TypeScript client for the Harmont API, generated from the OpenAPI spec.
+---
+
+<Callout type="warn" title="Harmont is in limited access">
+The Harmont API is **not yet open to the public**. Endpoints require an
+account, granted from the waitlist. **[Request access at
+harmont.dev](https://harmont.dev/)**. The SDK and reference below are
+published so you can build against the contract ahead of time.
+</Callout>
+
+`@harmont/cloud` is the official TypeScript SDK for the Harmont API. It is
+generated from the same [OpenAPI spec](/openapi.json) that backs the
+[REST reference](/api/reference), so its functions and types mirror the API
+exactly — one function per endpoint, fully typed request and response shapes.
+
+## Install
+
+```bash
+npm install @harmont/cloud
+```
+
+The SDK is built on a small fetch-based client and ships as both ESM and
+CommonJS with TypeScript declarations. It targets Node 18+ and any modern
+browser or bundler.
+
+## What's inside
+
+<Cards>
+  <Card title="Authentication" href="/sdk/authentication">
+    Construct a client and attach your bearer token.
+  </Card>
+  <Card title="Making calls" href="/sdk/usage">
+    Call typed functions, read responses, handle errors.
+  </Card>
+  <Card title="Streaming logs" href="/sdk/logs">
+    Follow a job's logs over SSE.
+  </Card>
+  <Card title="End-to-end example" href="/sdk/example">
+    Create a build, poll it, and stream its logs.
+  </Card>
+  <Card title="Reference" href="/sdk/reference">
+    Every public function, generated from the spec.
+  </Card>
+</Cards>
+
+## Relationship to the REST API
+
+The SDK is a thin, typed wrapper — there is no behaviour it adds beyond the
+HTTP contract. Anything documented in the [API reference](/api/reference)
+(auth, error envelope, rate limits) applies unchanged. When in doubt about a
+field, the [API reference](/api/reference) is the schema-level source of
+truth; the [SDK reference](/sdk/reference) shows the TypeScript surface.

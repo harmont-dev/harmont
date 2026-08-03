@@ -1,0 +1,4 @@
+[submodule "harmont-cli"]
+	path = harmont-cli
+	url = https://github.com/harmont-dev/harmont-cli.git
+	branch = main

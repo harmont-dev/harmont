@@ -1,0 +1,74 @@
+---
+title: Making calls
+description: Call typed functions, read responses, and handle errors.
+---
+
+Each SDK function maps to one API endpoint. You pass a single options object —
+`{ client, path, query, body }` as the endpoint requires — and get back a typed
+result.
+
+## A typed call
+
+```ts
+import { createClient, createConfig, listOrganizations } from "@harmont/cloud";
+
+const client = createClient(createConfig());
+client.interceptors.request.use((req) => {
+  req.headers.set("Authorization", `Bearer ${process.env.HARMONT_TOKEN}`);
+  return req;
+});
+
+const { data, error } = await listOrganizations({ client });
+if (error) throw new Error(`request failed: ${error.error.code}`);
+console.log(data); // typed response
+```
+
+The result is `{ data, error }`: on success `data` holds the typed response and
+`error` is `undefined`; on a non-2xx response `error` holds the API's
+[error envelope](/api/errors) (with its stable `code`) and `data` is
+`undefined`.
+
+## Path, query, and body
+
+Endpoints that take parameters declare them on the options object. For example,
+creating a build:
+
+<SdkSignature name="createBuild" />
+
+```ts
+import { createBuild } from "@harmont/cloud";
+
+const { data: build, error } = await createBuild({
+  client,
+  path: { org: "acme", pipeline: "ci" },
+  body: {
+    // CreateBuildRequest — see the reference link below for the full schema
+    source_url: "https://example.com/source.tar.gz",
+  },
+});
+```
+
+TypeScript enforces the shape of `path` and `body` from the generated types,
+so a missing `org` or a misspelled field is a compile error, not a 422 at
+runtime.
+
+## Errors
+
+The SDK never throws on a non-2xx response — it returns the error in the
+result. Check `error` and branch on its stable `code`:
+
+```ts
+const { data, error } = await getBuild({
+  client,
+  path: { org: "acme", pipeline: "ci", number: 42 },
+});
+if (error) {
+  if (error.error.code === "build_not_found") return null;
+  throw new Error(`unexpected: ${error.error.code}`);
+}
+return data;
+```
+
+Every `code` is documented in the [error reference](/api/errors). The full
+per-function surface — every parameter and response type — is in the
+[SDK reference](/sdk/reference).

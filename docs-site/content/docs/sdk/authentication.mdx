@@ -1,0 +1,56 @@
+---
+title: Authentication
+description: Construct a client and attach your bearer token.
+---
+
+Every Harmont API request is authenticated with a bearer token. The SDK lets
+you build a configured client once and pass it to each call.
+
+## Create a client
+
+```ts
+import { createClient, createConfig } from "@harmont/cloud";
+
+const client = createClient(
+  createConfig({
+    baseUrl: "https://api.harmont.dev", // the default; override for dev/self-host
+  }),
+);
+```
+
+`createConfig` seeds the client's configuration; `createClient` returns a
+client instance you pass to each SDK call. The default `baseUrl` is already
+`https://api.harmont.dev`, so you can omit it in production.
+
+## Attach your token
+
+Add an interceptor so every request carries your `Authorization` header:
+
+```ts
+client.interceptors.request.use((req) => {
+  req.headers.set("Authorization", `Bearer ${process.env.HARMONT_TOKEN}`);
+  return req;
+});
+```
+
+Create API tokens from the settings page in
+[Harmont](https://app.harmont.dev). Treat them like passwords — they grant
+full access to your organizations.
+
+## The default client
+
+The SDK also exports a ready-made `client` (with the production `baseUrl`).
+Configure it once and the SDK functions use it when you don't pass one
+explicitly:
+
+```ts
+import { client } from "@harmont/cloud";
+
+client.setConfig({
+  headers: { Authorization: `Bearer ${process.env.HARMONT_TOKEN}` },
+});
+```
+
+Passing an explicit `client` per call (the pattern above) is clearer for
+apps that talk to more than one environment or token; the shared default is
+convenient for scripts. See [Making calls](/sdk/usage) next.

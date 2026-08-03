@@ -1,0 +1,40 @@
+---
+title: API
+description: REST. JSON. Bearer-token auth. Stable codes on every error.
+---
+
+<Callout type="warn" title="Harmont is in limited access">
+The Harmont API is **not yet open to the public**. Endpoints require an
+account, and accounts are currently granted from the waitlist. **[Request
+access at harmont.dev](https://harmont.dev/)** — we're onboarding in
+batches. The reference below is published so you can build against the
+contract ahead of time.
+</Callout>
+
+The Harmont API is the REST surface to Harmont's service.
+
+## Quick orientation
+
+| | |
+| --- | --- |
+| **Base URL** | `https://api.harmont.dev/api/v0` |
+| **Auth** | `Authorization: Bearer <token>` |
+| **Errors** | Single envelope, stable `code`, doc URL on each (see [Errors](/api/errors)) |
+| **Endpoints** | [Reference](/api/reference) — every endpoint, grouped by tag |
+| **Spec** | [openapi.json](/openapi.json) — full OpenAPI 3 document, suitable for Postman / openapi-generator / Stoplight |
+
+## A minimal request
+
+```bash
+curl -fsS https://api.harmont.dev/api/v0/ping \
+  -H "Authorization: Bearer $HM_TOKEN"
+```
+
+```json
+{ "response": "pong" }
+```
+
+You can create new API access tokens by navigating to the settings page in
+[Harmont](https://app.harmont.dev).
+
+The full API reference is available [here](/api/reference).

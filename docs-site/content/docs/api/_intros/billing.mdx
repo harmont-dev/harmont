@@ -1,0 +1,8 @@
+Billing endpoints expose an organization's ledger: its current balance,
+its transaction history, and a usage breakdown of VM-lease time by pipeline
+and user. They also start a Stripe Checkout session for topping up and
+redeem coupon codes.
+
+Balances are denominated in cents. Top-ups are credited asynchronously when
+Stripe confirms the checkout via webhook, so a successful `checkout` call
+returns a redirect URL, not an immediate balance change.

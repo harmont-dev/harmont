@@ -1,0 +1,30 @@
+[package]
+name = "harmont-cloud"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "High-level Rust client for the Harmont Cloud API (builds, logs, auth)."
+keywords = ["ci", "harmont", "cloud", "sdk"]
+categories = ["api-bindings"]
+readme = "../README.md"
+
+[dependencies]
+harmont-cloud-raw = { path = "../harmont-cloud-raw", version = "0.1.3" }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+futures-core = { workspace = true }
+futures-util = { workspace = true }
+bytes = { workspace = true }
+eventsource-stream = { workspace = true }
+base64 = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+wiremock = "0.6"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
+futures-util = "0.3"

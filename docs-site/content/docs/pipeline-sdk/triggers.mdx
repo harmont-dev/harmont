@@ -1,0 +1,46 @@
+---
+title: Triggers
+description: Run a pipeline on push or pull request.
+---
+
+Pass `triggers=[...]` when you register a pipeline to control when Harmont runs
+it on a connected repository.
+
+## Push
+
+<DslSignature name="push" />
+
+## Pull request
+
+<DslSignature name="pull_request" />
+
+<SdkTabs>
+  <Tab value="Python">
+```python
+import harmont as hm
+
+@hm.pipeline(
+    "ci",
+    triggers=[hm.push(branch="main"), hm.pull_request(branches=["main"])],
+)
+def ci() -> hm.Step:
+    return hm.sh("make test")
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript
+import { pipeline, push, pullRequest, sh, type PipelineDefinition } from "@harmont/hm";
+
+const pipelines: PipelineDefinition[] = [
+  {
+    slug: "ci",
+    triggers: [push({ branch: "main" }), pullRequest({ branches: ["main"] })],
+    pipeline: pipeline([sh("make test")]),
+  },
+];
+export default pipelines;
+```
+  </Tab>
+</SdkTabs>
+
+Full options are in the [triggers reference](/pipeline-sdk/reference/triggers).

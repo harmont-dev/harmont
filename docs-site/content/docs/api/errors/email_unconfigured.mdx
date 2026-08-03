@@ -1,0 +1,17 @@
+---
+title: email_unconfigured
+description: This deployment has no email provider configured.
+---
+
+<ErrorMeta code="email_unconfigured" />
+
+## When this happens
+
+An action required sending email (sign-up, recovery), but this Harmont
+deployment has no email provider configured. You will see this on self-hosted
+or local environments before mail credentials are set.
+
+## How to fix it
+
+If you run this deployment, configure the email provider credentials and
+restart the API. On harmont.dev, contact support with the `request_id`.

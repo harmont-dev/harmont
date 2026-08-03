@@ -1,0 +1,34 @@
+---
+title: hm run
+description: Run a pipeline against your local working tree, in Docker.
+---
+
+## Synopsis
+
+```bash
+hm run [PIPELINE] [OPTIONS]
+```
+
+`hm run` packs your current working tree, boots a local Docker sandbox, and
+runs the pipeline against it as it stands, including changes you haven't
+committed. If your repo declares exactly one pipeline, the `PIPELINE` slug is
+optional.
+
+## Options
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `-b, --branch <BRANCH>` | _(detected)_ | Branch to record on the build. |
+| `-m, --message <MESSAGE>` | _(none)_ | Build message. |
+| `-e, --env <KEY=VALUE>` | _(none)_ | Set an environment variable (repeatable). |
+| `-d, --dir <PATH>` | `.` | Source root to pack. |
+| `--parallelism <N>` | _(cores)_ | Max concurrent chains. |
+| `--format <NAME>` | `human` | Output format: `human` or `json`. |
+| `--logs` | off | Stream full logs instead of progress bars. |
+| `--no-watch` | off | Don't watch the build after creating it. |
+
+## Example
+
+```bash
+hm run ci --env CI=true --logs
+```

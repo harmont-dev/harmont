@@ -1,0 +1,75 @@
+---
+title: Next.js
+description: "A Next.js app via the js toolchain: build, test, and lint."
+---
+
+A Next.js app via the js toolchain: build, test, and lint.
+
+## Project layout
+
+<Tree path="nextjs" maxDepth={3} />
+
+## Pipeline
+
+<SdkTabs>
+  <Tab value="Python">
+<RemoteCode src="nextjs/.hm/pipeline.py" lang="python" title=".hm/pipeline.py" />
+  </Tab>
+  <Tab value="TypeScript">
+<RemoteCode src="nextjs/.hm/pipeline.ts" lang="typescript" title=".hm/pipeline.ts" />
+  </Tab>
+</SdkTabs>
+
+## Run it
+
+```bash
+hm run ci
+```
+
+## Before your first run: pin your package manager
+
+`create-next-app` installs your dependencies with a specific pnpm version and
+writes a supply-chain policy (`minimumReleaseAge`, the 24-hour package-age gate)
+next to the lockfile. The trouble starts when the build runs a *different*,
+**newer** pnpm than the one that scaffolded the project: pnpm 11.1+ re-validates
+the committed lockfile against that policy before installing, and a brand-new app
+pins the freshest Next.js, React, and type packages — all published in the last
+day — so the install fails before fetching anything:
+
+```
+✗ Lockfile failed supply-chain policy check
+[ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION] 5 lockfile entries failed verification:
+  caniuse-lite@1.0.30001799 was published ... within the minimumReleaseAge cutoff
+```
+
+The fix is to build with the **same pnpm that scaffolded the project**, so CI
+resolves exactly what you ran locally. `create-next-app` prints that version on
+its last line:
+
+```
+Done in 5.4s using pnpm v10.33.0
+```
+
+Add a matching `packageManager` field to `package.json`:
+
+```json title="package.json"
+{
+  "packageManager": "pnpm@10.33.0"
+}
+```
+
+The `js` toolchain reads this field and pins the build's pnpm to it (via
+`corepack`), so CI installs with the same package manager as your machine. The
+build becomes reproducible **and** your lockfile's supply-chain policy stays
+intact — no need to weaken it.
+
+<Callout type="info">
+Use the exact version from your own `create-next-app` output — it may differ from
+`10.33.0`. Pinning `packageManager` is good hygiene for any JS project on Harmont:
+it's what makes your local install and your CI install byte-for-byte the same.
+</Callout>
+
+## Stuck?
+
+Pipelines for real apps hit real edges. If something doesn't build the way you
+expect, ask in the [Harmont Discord](https://discord.gg/hm-dev) — we answer fast.

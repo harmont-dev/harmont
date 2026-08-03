@@ -1,0 +1,46 @@
+---
+title: Docs for AI agents
+description: Read these docs as Markdown — per-page .md, content negotiation, and llms.txt.
+---
+
+These docs are built for AI agents as well as people. Every page is available
+as clean Markdown, and the whole site is indexed in machine-readable form. Each
+section below stands on its own.
+
+## Fetch any page as Markdown
+
+Append `.md` to any docs URL to get its Markdown source — no HTML, no
+navigation chrome:
+
+```bash
+curl https://docs.harmont.dev/pipeline-sdk/patterns.md
+curl https://docs.harmont.dev/cli/run.md
+```
+
+## Or use content negotiation
+
+Send an `Accept: text/markdown` header and the same URL returns Markdown. Most
+coding agents (e.g. Claude Code, Cursor) send this automatically:
+
+```bash
+curl https://docs.harmont.dev/cli/run -H 'Accept: text/markdown'
+```
+
+The response carries `Vary: Accept`, so a browser at the same URL still gets HTML.
+
+## Site indexes
+
+- [/llms.txt](https://docs.harmont.dev/llms.txt) — a Markdown index of every
+  page, with links and one-line descriptions.
+- [/llms-full.txt](https://docs.harmont.dev/llms-full.txt) — every page's
+  Markdown concatenated into one document, for loading the whole corpus at once.
+
+## Point an agent at Harmont
+
+The fastest way to get a correct pipeline from an agent: tell it to read
+[/pipeline-sdk/patterns.md](https://docs.harmont.dev/pipeline-sdk/patterns.md)
+first. That page is the canonical do/don't guidance — chiefly, **use the
+high-level toolchain APIs (`hm.rust.toolchain()`, `hm.cmake()`, …) rather than
+hand-rolling commands through the general-purpose `hm.sh(...)` escape hatch.**
+
+For a working starting point, copy an [example](/examples) and adapt it.

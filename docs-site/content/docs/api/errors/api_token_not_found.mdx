@@ -1,0 +1,18 @@
+---
+title: api_token_not_found
+description: No such API key. It may have already been revoked; reload and try again.
+---
+
+<ErrorMeta code="api_token_not_found" />
+
+## When this happens
+
+You tried to revoke an API key by its id, but no key with that id exists on your
+account. This usually means the key was already revoked — often from another tab
+or device — and the page you are looking at is stale.
+
+## How to fix it
+
+Reload your API key list so it reflects the current state, then retry against a
+key that still exists. If the entry keeps reappearing after a reload, sign out
+and back in to refresh your session.

@@ -1,0 +1,125 @@
+---
+title: Getting started
+description: Install hm, scaffold a pipeline with hm init, and run it.
+---
+
+Harmont runs CI against your local working tree with `hm run`, so you can put a
+change through CI before you commit it. This guide takes you from an empty repo
+to a passing build.
+
+## Install hm
+
+```bash
+curl -fsSL https://get.harmont.dev/install.sh | sh
+```
+
+The script downloads the static binary for your platform, verifies its
+SHA-256 against `https://get.harmont.dev/sha256sums.txt`, and installs to
+`~/.local/bin/hm`. Confirm it works:
+
+```bash
+hm --version
+```
+
+You also need Docker running locally; `hm run` executes each step in a
+container.
+
+## Scaffold a pipeline with `hm init`
+
+Run `hm init` in your project. It asks which kind of project you have and
+writes a ready-to-run starter pipeline to `.hm/`:
+
+```bash
+hm init
+```
+
+```
+? Select a project template ›
+  CMake
+  Elixir
+  Next.js
+  JavaScript / TypeScript
+❯ Rust
+  Zig
+  Python
+```
+
+Pick one (or skip the prompt with `hm init --template rust`) and `hm init`
+writes `.hm/pipeline.py` (or `.hm/pipeline.ts` for the Next.js,
+JavaScript/TypeScript, and Zig templates). For example, the Rust template:
+
+```python title=".hm/pipeline.py"
+import harmont as hm
+from harmont._rust import RustToolchain
+
+
+@hm.target()
+def project() -> RustToolchain:
+    return hm.rust.toolchain(path=".")
+
+
+@hm.pipeline(
+    "ci",
+    env={"CI": "true"},
+    default_image="ubuntu:24.04",
+    triggers=[hm.push(branch="main")],
+)
+def ci(project: hm.Target[RustToolchain]) -> tuple[hm.Step, ...]:
+    return (project.build(), project.test(), project.clippy(), project.fmt())
+```
+
+## Run it
+
+```bash
+hm run ci
+```
+
+`hm run` packs your working tree, boots a local sandbox, and streams the
+build:
+
+```
+Packing working tree (6 files, 12 KB)... done.
+Build #1 created. Streaming logs.
+
+  rust-install   ✓  2.1s
+  build          ✓  3.4s
+  test           ✓  0.9s
+
+Build passed in 6.4s.
+```
+
+## Grow the pipeline
+
+Two rules cover most pipelines:
+
+- A step built **off** another runs **after** it and inherits its filesystem.
+  That's a sequence.
+- Steps returned **together** with no dependency between them run in
+  **parallel**.
+
+<PipelineDag
+  maxWidth={600}
+  caption="install runs first; build, test, clippy, and fmt fork from its snapshot and run at the same time."
+  nodes={[
+    { id: 'install', label: 'rust install', duration: '2.1s' },
+    { id: 'build', label: 'build', duration: '3.4s' },
+    { id: 'test', label: 'test', duration: '0.9s' },
+    { id: 'clippy', label: 'clippy', duration: '1.2s' },
+    { id: 'fmt', label: 'fmt', duration: '0.3s' },
+  ]}
+  edges={[
+    { from: 'install', to: 'build' },
+    { from: 'install', to: 'test' },
+    { from: 'install', to: 'clippy' },
+    { from: 'install', to: 'fmt' },
+  ]}
+/>
+
+To go deeper, read the [Pipeline SDK](/pipeline-sdk) guide. For complete,
+runnable projects in other languages, see [Examples](/examples).
+
+## Get help
+
+Stuck on a step, or want to see how others structure their pipelines? Join the
+[Harmont Discord](https://discord.gg/hm-dev) — it's the fastest way to get an
+answer from the team and the community.

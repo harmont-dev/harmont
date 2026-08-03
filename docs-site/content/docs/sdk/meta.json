@@ -1,0 +1,4 @@
+{
+  "title": "Cloud SDK",
+  "pages": ["index", "authentication", "usage", "logs", "example", "reference"]
+}

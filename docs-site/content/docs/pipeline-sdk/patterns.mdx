@@ -1,0 +1,208 @@
+---
+title: Patterns & anti-patterns
+description: Write pipelines with the high-level toolchain APIs. Reach for hm.sh only when no toolchain covers your case.
+---
+
+This page is the canonical guidance for writing Harmont pipelines well. Each
+rule stands on its own — read any section in isolation. The single most
+important rule: **prefer a toolchain over raw shell.**
+
+## Prefer toolchains over raw shell
+
+Harmont ships toolchains for Rust, Python, Go, JavaScript/TypeScript, CMake
+(C/C++), Elixir, and Zig. A toolchain installs the runtime, warms the
+dependency cache, and exposes opinionated `build`/`test`/`lint`/`fmt` actions.
+Use it. It gives you correct install, caching, and parallelism for free.
+
+`hm.sh(...)` is the general-purpose escape hatch — a raw shell step. It is the
+right tool only when **no toolchain covers your case**. Reaching for it first
+means you re-implement install and caching by hand, usually worse.
+
+✅ **Do — use the toolchain for your language:**
+
+<SdkTabs>
+  <Tab value="Python">
+```python title=".hm/pipeline.py"
+import harmont as hm
+
+@hm.pipeline("ci")
+def ci() -> tuple[hm.Step, ...]:
+    project = hm.rust.toolchain(path=".")
+    return (project.build(), project.test(), project.clippy(), project.fmt())
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript title=".hm/pipeline.ts"
+import { pipeline, type PipelineDefinition } from "@harmont/hm";
+import { rust } from "@harmont/hm/toolchains";
+
+const project = rust.toolchain({ path: "." });
+
+const pipelines: PipelineDefinition[] = [
+  { slug: "ci", pipeline: pipeline([project.build(), project.test(), project.clippy(), project.fmt()]) },
+];
+export default pipelines;
+```
+  </Tab>
+</SdkTabs>
+
+❌ **Don't — hand-roll the same thing with raw shell:**
+
+<SdkTabs>
+  <Tab value="Python">
+```python title=".hm/pipeline.py"
+import harmont as hm
+
+# Anti-pattern: no managed toolchain install, no dependency caching, and you
+# now own the correctness of every command.
+@hm.pipeline("ci")
+def ci() -> tuple[hm.Step, ...]:
+    return (
+        hm.sh("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y")
+        .sh("cargo build")
+        .sh("cargo test"),
+    )
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript title=".hm/pipeline.ts"
+import { pipeline, sh, type PipelineDefinition } from "@harmont/hm";
+
+// Anti-pattern: no managed toolchain install, no dependency caching.
+const pipelines: PipelineDefinition[] = [
+  {
+    slug: "ci",
+    pipeline: pipeline([
+      sh("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y")
+        .sh("cargo build")
+        .sh("cargo test"),
+    ]),
+  },
+];
+export default pipelines;
+```
+  </Tab>
+</SdkTabs>
+
+When you genuinely have no toolchain (a bespoke build tool, a one-off script),
+`hm.sh(...)` is correct and supported — see [Chains & steps](/pipeline-sdk/chains).
+
+## Fork shared work; don't repeat install
+
+Toolchain actions already fork off one shared install step, so adding a check
+costs only the check. When you do build chains by hand, fork off a common root
+instead of re-running setup in every branch.
+
+✅ **Do — one root, parallel forks:**
+
+<SdkTabs>
+  <Tab value="Python">
+```python
+import harmont as hm
+
+root = hm.sh("make deps")
+lint = root.fork("lint").sh("make lint")
+test = root.fork("test").sh("make test")
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript
+import { sh } from "@harmont/hm";
+
+const root = sh("make deps");
+const lint = root.fork({ label: "lint" }).sh("make lint");
+const test = root.fork({ label: "test" }).sh("make test");
+```
+  </Tab>
+</SdkTabs>
+
+❌ **Don't — re-install dependencies in every chain:**
+
+<SdkTabs>
+  <Tab value="Python">
+```python
+import harmont as hm
+
+lint = hm.sh("make deps").sh("make lint")   # installs deps
+test = hm.sh("make deps").sh("make test")   # installs deps again
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript
+import { sh } from "@harmont/hm";
+
+const lint = sh("make deps").sh("make lint");  // installs deps
+const test = sh("make deps").sh("make test");  // installs deps again
+```
+  </Tab>
+</SdkTabs>
+
+## Declare triggers in code; don't gate inside steps
+
+Run-on-push / run-on-PR belongs in the pipeline's `triggers`, not in shell
+conditionals. The trigger is visible to Harmont; a branch check buried in a
+step is not.
+
+✅ **Do:**
+
+<SdkTabs>
+  <Tab value="Python">
+```python
+import harmont as hm
+
+@hm.pipeline("ci", triggers=[hm.push(branch="main")])
+def ci() -> tuple[hm.Step, ...]:
+    project = hm.rust.toolchain(path=".")
+    return (project.build(), project.test())
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript
+import { pipeline, push, type PipelineDefinition } from "@harmont/hm";
+import { rust } from "@harmont/hm/toolchains";
+
+const project = rust.toolchain({ path: "." });
+
+const pipelines: PipelineDefinition[] = [
+  {
+    slug: "ci",
+    triggers: [push({ branch: "main" })],
+    pipeline: pipeline([project.build(), project.test()]),
+  },
+];
+export default pipelines;
+```
+  </Tab>
+</SdkTabs>
+
+❌ **Don't — branch-gate inside a shell step:**
+
+<SdkTabs>
+  <Tab value="Python">
+```python
+import harmont as hm
+
+@hm.pipeline("ci")
+def ci() -> tuple[hm.Step, ...]:
+    return (hm.sh('[ "$BRANCH" = "main" ] && cargo test || true'),)
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript
+import { pipeline, sh, type PipelineDefinition } from "@harmont/hm";
+
+const pipelines: PipelineDefinition[] = [
+  { slug: "ci", pipeline: pipeline([sh('[ "$BRANCH" = "main" ] && cargo test || true')]) },
+];
+export default pipelines;
+```
+  </Tab>
+</SdkTabs>
+
+See [Triggers](/pipeline-sdk/triggers) for the full trigger surface.
+
+## Write pipelines with the SDK; don't hand-author IR JSON
+
+Pipelines are programs. Author them with the `harmont` / `@harmont/hm` SDK and
+let `hm` lower them. Never hand-write the underlying v0 IR JSON — it is a
+compiler target, not an authoring format, and it is unstable across versions.

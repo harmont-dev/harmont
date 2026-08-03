@@ -1,0 +1,33 @@
+---
+title: CMake (C / C++)
+description: A CMake project wired to Harmont — configure, build, test, and format.
+---
+
+Harmont has first-class CMake support. One `hm.cmake(...)` call picks the
+compiler, passes cache `defines`, and gives you `test()`, `lint()`, and
+`fmt()` actions backed by CTest and clang-format. This example uses an explicit
+compiler and a Release build with C++20.
+
+## Project layout
+
+<Tree path="cmake-advanced" maxDepth={3} />
+
+## Pipeline
+
+<SdkTabs>
+  <Tab value="Python">
+    <RemoteCode src="cmake-advanced/.hm/pipeline.py" lang="python" title=".hm/pipeline.py" />
+  </Tab>
+  <Tab value="TypeScript">
+    <RemoteCode src="cmake-advanced/.hm/pipeline.ts" lang="typescript" title=".hm/pipeline.ts" />
+  </Tab>
+</SdkTabs>
+
+## Run it
+
+```bash
+hm run ci
+```
+
+For a minimal single-binary setup, see the `c/` and `cpp/` examples in the
+[harmont-cli repo](https://github.com/harmont-dev/harmont-cli/tree/main/examples).

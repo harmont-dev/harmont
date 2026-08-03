@@ -1,0 +1,8 @@
+# Acknowledged advisory IDs that are not actionable (transitive deps with no
+# available upgrade). One advisory ID per non-comment line.
+#
+# GHSA-g2wm-735q-3f56: cowlib@2.16.1 - Cookie header injection via cow_cookie:cookie/1.
+# No patched version available as of 2026-05-31. Cowlib is a transitive dep of
+# Bandit/Phoenix via Gun; the affected cow_cookie:cookie/1 encoder is not called
+# on cookie values we control (we read, not set, cookies). Track for upstream fix.
+GHSA-g2wm-735q-3f56

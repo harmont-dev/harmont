@@ -1,0 +1,80 @@
+---
+title: End-to-end example
+description: Create a client, create a build, poll it, and stream its logs.
+---
+
+A complete script that authenticates, creates a build, polls it to completion,
+and streams its logs. It uses only the public SDK functions.
+
+```ts title="run.ts"
+import {
+  createClient,
+  createConfig,
+  listOrganizations,
+  createBuild,
+  getBuild,
+  getBuildLogToken,
+  listJobs,
+} from "@harmont/cloud";
+
+const token = process.env.HARMONT_TOKEN!;
+const baseUrl = process.env.HARMONT_API_URL ?? "https://api.harmont.dev";
+
+const client = createClient(createConfig({ baseUrl }));
+client.interceptors.request.use((req) => {
+  req.headers.set("Authorization", `Bearer ${token}`);
+  return req;
+});
+
+// 1. Pick an organization.
+const { data: orgs, error: orgErr } = await listOrganizations({ client });
+if (orgErr) throw new Error(orgErr.error.code);
+const org = orgs!.data[0].slug;
+
+// 2. Create a build on a pipeline.
+const { data: build, error: buildErr } = await createBuild({
+  client,
+  path: { org, pipeline: "ci" },
+  body: {
+    branch: "main",
+    commit: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+    source_url: "https://example.com/source.tar.gz",
+  },
+});
+if (buildErr) throw new Error(buildErr.error.code);
+const number = build!.number;
+
+// 3. Poll until the build reaches a terminal state.
+const terminal = new Set(["passed", "failed", "canceled"]);
+let state = build!.state;
+while (!terminal.has(state)) {
+  await new Promise((r) => setTimeout(r, 2000));
+  const { data } = await getBuild({ client, path: { org, pipeline: "ci", number } });
+  state = data!.state;
+  console.log(`build #${number}: ${state}`);
+}
+
+// 4. Stream the first job's logs.
+const { data: tok } = await getBuildLogToken({ client, path: { org, pipeline: "ci", number } });
+const { data: jobs } = await listJobs({ client, path: { org, pipeline: "ci", number } });
+const jobId = jobs!.data[0].id;
+
+const res = await fetch(`${baseUrl}/v0/jobs/${jobId}/logs?token=${tok!.token}`);
+const reader = res.body!.getReader();
+const decoder = new TextDecoder();
+for (;;) {
+  const { value, done } = await reader.read();
+  if (done) break;
+  process.stdout.write(decoder.decode(value));
+}
+```
+
+Run it with a token in your environment:
+
+```bash
+HARMONT_TOKEN=hmt_… npx tsx run.ts
+```
+
+Each function used here is documented in the [SDK reference](/sdk/reference),
+and the response shapes (`build.state`, `jobs.data[].id`) are defined in the
+[API reference](/api/reference).

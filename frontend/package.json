@@ -1,0 +1,50 @@
+{
+  "name": "vite-template-solid",
+  "version": "0.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "predev": "openapi-typescript ../elixir/apps/harmont_api/priv/static/openapi.json -o src/api/v1.d.ts",
+    "dev": "vite",
+    "prebuild": "openapi-typescript ../elixir/apps/harmont_api/priv/static/openapi.json -o src/api/v1.d.ts",
+    "build": "vite build",
+    "test": "vitest run",
+    "serve": "vite preview",
+    "codegen": "openapi-typescript ../elixir/apps/harmont_api/priv/static/openapi.json -o src/api/v1.d.ts"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@solidjs/testing-library": "^0.8.10",
+    "@tailwindcss/vite": "^4.1.13",
+    "@types/dagre": "^0.7.54",
+    "jsdom": "^25.0.1",
+    "msw": "^2.14.6",
+    "openapi-typescript": "^7.13.0",
+    "solid-devtools": "^0.34.3",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.4",
+    "vite-plugin-solid": "^2.11.8",
+    "vitest": "^3.0.5"
+  },
+  "dependencies": {
+    "@dagrejs/dagre": "^3.0.0",
+    "@kobalte/core": "^0.13.11",
+    "@simplewebauthn/browser": "^13.3.0",
+    "@solidjs/router": "^0.16.1",
+    "@tanstack/solid-query": "^5.100.14",
+    "baffle": "^0.3.6",
+    "chart.js": "^4.5.1",
+    "date-fns": "^4.3.0",
+    "openapi-fetch": "^0.17.0",
+    "solid-chartjs": "^1.3.11",
+    "solid-js": "^1.9.9",
+    "solid-motionone": "^1.0.4"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
+}

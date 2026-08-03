@@ -1,0 +1,60 @@
+---
+title: Errors
+description: One JSON envelope for every failure — stable code, human message, and a link to the fix.
+---
+
+Every non-2xx response from the Harmont API uses the same JSON envelope.
+Scripts match on `code`, humans read `message`, and `doc_url` points at the
+page for that exact error.
+
+```json
+{
+  "error": {
+    "type": "invalid_request",
+    "code": "passkey_unknown_credential",
+    "message": "This passkey is not registered. Try a different passkey or use recovery.",
+    "doc_url": "https://docs.harmont.dev/api/errors/passkey_unknown_credential",
+    "request_id": "req_01H..."
+  }
+}
+```
+
+| Field | Notes |
+| --- | --- |
+| `type` | Closed-set classifier for generic handling (retry, auth prompts). One of `invalid_request`, `not_found`, `unauthorized`, `forbidden`, `conflict`, `billing`, `server_error`, `rate_limited`. |
+| `code` | Stable snake_case identifier — the scripting contract. Never renamed in place; new codes are added and old ones aliased. |
+| `message` | Human-readable, in the user's voice. No stack traces, no type names. |
+| `doc_url` | Link to the page for this `code` (the pages listed in the sidebar). |
+| `request_id` | Echoed from the `X-Request-Id` response header. Paste it into support requests. |
+
+HTTP status follows REST convention: `400` invalid request, `401`
+unauthenticated, `403` unauthorized, `404` not found, `409` conflict, `402`
+billing, `429` rate-limited, `5xx` server.
+
+## Error doctrine
+
+Every Harmont error points precisely, states what was observed, and states the
+fix. We do not write "did you mean?" — we have the context, so we use it.
+
+- *"Field `name` is required."* — not *"Bad request."*
+- *"Build #14 has already finished and cannot be canceled."* — not *"Conflict."*
+
+## Handling errors in clients
+
+Switch on `code` for behavior; show `message` to the user; link `doc_url`:
+
+```ts
+async function call(url: string) {
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${HM_TOKEN}` } });
+  if (r.ok) return r.json();
+  const { error } = await r.json();
+  switch (error.code) {
+    case 'passkey_unknown_credential':
+      throw new AuthError(error.message, error.doc_url);
+    default:
+      throw new ApiError(error.type, error.message, error.doc_url);
+  }
+}
+```
+
+Browse the individual error codes in the sidebar for the cause and fix of each.

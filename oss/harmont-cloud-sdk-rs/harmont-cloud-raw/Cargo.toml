@@ -1,0 +1,28 @@
+[package]
+name = "harmont-cloud-raw"
+version.workspace = true
+edition.workspace = true
+license = "MIT AND MPL-2.0"
+repository.workspace = true
+description = "Generated (progenitor) raw client for the Harmont Cloud API. Do not edit by hand."
+
+# Generated progenitor code contains doctests that reference private modules
+# (progenitor_client::) — disable to avoid false doctest failures.
+[lib]
+doctest = false
+
+[dependencies]
+bytes = { workspace = true }
+chrono = { workspace = true }
+futures-core = { workspace = true }
+percent-encoding = "2.3"
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_urlencoded = { workspace = true }
+uuid = { workspace = true }
+
+[lints.clippy]
+# Generated progenitor code returns large Result error variants; not fixable
+# without changing codegen. Suppress crate-wide for the generated raw client.
+result_large_err = "allow"

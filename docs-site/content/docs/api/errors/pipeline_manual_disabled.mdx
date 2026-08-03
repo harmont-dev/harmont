@@ -1,0 +1,16 @@
+---
+title: pipeline_manual_disabled
+description: Manual builds are turned off for this pipeline.
+---
+
+<ErrorMeta code="pipeline_manual_disabled" />
+
+## When this happens
+
+You tried to start a build by hand on a pipeline whose configuration disables
+manual triggers. The pipeline still builds from webhooks and schedules.
+
+## How to fix it
+
+Trigger the build through its configured source (a push or a schedule), or
+enable manual builds in the pipeline settings if you own it.

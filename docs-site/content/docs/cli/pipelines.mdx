@@ -1,0 +1,21 @@
+---
+title: hm pipelines
+description: Print the discovered pipelines as JSON.
+---
+
+## Synopsis
+
+```bash
+hm pipelines [--dir <PATH>]
+```
+
+`hm pipelines` discovers every pipeline declared under `.hm/` and prints a
+machine-readable envelope (`schema_version: "1"`) describing each one — slug,
+name, triggers, and whether manual runs are allowed. A repo with no `.hm/`
+prints an empty registry rather than erroring.
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `-d, --dir <PATH>` | `.` | Source root containing `.hm/`. |
+
+To see the full compiled plan for a single pipeline, use `hm render <slug>`.

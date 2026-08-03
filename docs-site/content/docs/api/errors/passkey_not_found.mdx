@@ -1,0 +1,18 @@
+---
+title: passkey_not_found
+description: No such passkey. It may have already been removed; reload and try again.
+---
+
+<ErrorMeta code="passkey_not_found" />
+
+## When this happens
+
+You tried to rename or delete a passkey by its id, but no passkey with that id
+exists on your account. This usually means the passkey was already removed —
+often from another tab or device — and the page you are looking at is stale.
+
+## How to fix it
+
+Reload your passkey list so it reflects the current state, then retry against a
+passkey that still exists. If the entry keeps reappearing after a reload, sign
+out and back in to refresh your session.

@@ -1,0 +1,142 @@
+[
+  {
+    "code": "account_has_billing_history",
+    "message": "This account can't be deleted while it has billing history (redeemed coupons, created coupons, or Stripe checkouts).",
+    "type": "conflict",
+    "http_status": 409,
+    "doc_url": "https://docs.harmont.dev/api/errors/account_has_billing_history"
+  },
+  {
+    "code": "api_token_not_found",
+    "message": "No such API key. It may have already been revoked; reload and try again.",
+    "type": "not_found",
+    "http_status": 404,
+    "doc_url": "https://docs.harmont.dev/api/errors/api_token_not_found"
+  },
+  {
+    "code": "billing_insufficient_balance",
+    "message": "Your account doesn't have enough balance for this build.",
+    "type": "billing",
+    "http_status": 402,
+    "doc_url": "https://docs.harmont.dev/api/errors/billing_insufficient_balance"
+  },
+  {
+    "code": "billing_provider_error",
+    "message": "The billing provider is unavailable. Try again shortly.",
+    "type": "server_error",
+    "http_status": 502,
+    "doc_url": "https://docs.harmont.dev/api/errors/billing_provider_error"
+  },
+  {
+    "code": "billing_unconfigured",
+    "message": "Billing is not configured.",
+    "type": "server_error",
+    "http_status": 503,
+    "doc_url": "https://docs.harmont.dev/api/errors/billing_unconfigured"
+  },
+  {
+    "code": "email_unconfigured",
+    "message": "Email delivery is not configured.",
+    "type": "server_error",
+    "http_status": 500,
+    "doc_url": "https://docs.harmont.dev/api/errors/email_unconfigured"
+  },
+  {
+    "code": "passkey_assertion_failed",
+    "message": "That passkey signature could not be verified. Try signing in again.",
+    "type": "invalid_request",
+    "http_status": 400,
+    "doc_url": "https://docs.harmont.dev/api/errors/passkey_assertion_failed"
+  },
+  {
+    "code": "passkey_challenge_invalid",
+    "message": "This passkey prompt has expired. Try again.",
+    "type": "invalid_request",
+    "http_status": 400,
+    "doc_url": "https://docs.harmont.dev/api/errors/passkey_challenge_invalid"
+  },
+  {
+    "code": "passkey_email_send_failed",
+    "message": "We couldn't send the verification email. Try again shortly.",
+    "type": "server_error",
+    "http_status": 500,
+    "doc_url": "https://docs.harmont.dev/api/errors/passkey_email_send_failed"
+  },
+  {
+    "code": "passkey_last_credential",
+    "message": "You can't remove your last sign-in method.",
+    "type": "conflict",
+    "http_status": 409,
+    "doc_url": "https://docs.harmont.dev/api/errors/passkey_last_credential"
+  },
+  {
+    "code": "passkey_not_found",
+    "message": "No such passkey. It may have already been removed; reload and try again.",
+    "type": "not_found",
+    "http_status": 404,
+    "doc_url": "https://docs.harmont.dev/api/errors/passkey_not_found"
+  },
+  {
+    "code": "passkey_registration_failed",
+    "message": "We couldn't register that passkey. Try again.",
+    "type": "invalid_request",
+    "http_status": 400,
+    "doc_url": "https://docs.harmont.dev/api/errors/passkey_registration_failed"
+  },
+  {
+    "code": "passkey_signup_email_taken",
+    "message": "An account already exists for this email. Sign in instead.",
+    "type": "conflict",
+    "http_status": 409,
+    "doc_url": "https://docs.harmont.dev/api/errors/passkey_signup_email_taken"
+  },
+  {
+    "code": "passkey_token_invalid",
+    "message": "Your sign-up or recovery link has expired. Request a new one.",
+    "type": "invalid_request",
+    "http_status": 400,
+    "doc_url": "https://docs.harmont.dev/api/errors/passkey_token_invalid"
+  },
+  {
+    "code": "passkey_unknown_credential",
+    "message": "This passkey is not registered.",
+    "type": "invalid_request",
+    "http_status": 400,
+    "doc_url": "https://docs.harmont.dev/api/errors/passkey_unknown_credential"
+  },
+  {
+    "code": "passkey_user_verification_required",
+    "message": "Your device must verify it's you (PIN, biometric) to use this passkey.",
+    "type": "invalid_request",
+    "http_status": 400,
+    "doc_url": "https://docs.harmont.dev/api/errors/passkey_user_verification_required"
+  },
+  {
+    "code": "pipeline_manual_disabled",
+    "message": "Manual builds are disabled for this pipeline.",
+    "type": "forbidden",
+    "http_status": 403,
+    "doc_url": "https://docs.harmont.dev/api/errors/pipeline_manual_disabled"
+  },
+  {
+    "code": "signup_cap_reached",
+    "message": "Harmont is at capacity right now while we're in early access, so new sign-ups are paused. Join our Discord (https://discord.gg/hm-dev) for updates and try again later. For a business use-case, email marko@harmont.dev.",
+    "type": "service_unavailable",
+    "http_status": 503,
+    "doc_url": "https://docs.harmont.dev/api/errors/signup_cap_reached"
+  },
+  {
+    "code": "signup_failed",
+    "message": "We couldn't complete your sign-up. Try again shortly.",
+    "type": "server_error",
+    "http_status": 500,
+    "doc_url": "https://docs.harmont.dev/api/errors/signup_failed"
+  },
+  {
+    "code": "user_name_invalid",
+    "message": "Display name must be between 1 and 255 characters.",
+    "type": "invalid_request",
+    "http_status": 422,
+    "doc_url": "https://docs.harmont.dev/api/errors/user_name_invalid"
+  }
+]

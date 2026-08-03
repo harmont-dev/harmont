@@ -1,0 +1,8 @@
+A build is one run of a pipeline. Each build has a `number` unique within
+its pipeline (the URL key) and a stable `id` UUID. Its aggregate state —
+`scheduled`, `running`, `passed`, `failed`, `canceled`, `skipped` — rolls
+up from the states of its jobs.
+
+These endpoints trigger a build, read it, cancel a running one, list its
+artifacts, and mint the short-lived token the browser uses to stream live
+logs. The jobs that make up a build live under [Jobs](/api/reference/jobs).

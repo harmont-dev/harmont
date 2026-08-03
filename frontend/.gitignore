@@ -1,0 +1,38 @@
+dist
+.wrangler
+.output
+.vercel
+.netlify
+.vinxi
+app.config.timestamp_*.js
+
+# Test / build output
+coverage/
+*.tsbuildinfo
+
+# Logs
+*.log
+
+# Environment
+.env
+.env*.local
+
+# dependencies
+/node_modules
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+*.launch
+.settings/
+
+# Temp
+gitignore
+
+# Generated types
+src/api/v1.d.ts
+
+# System Files
+.DS_Store
+Thumbs.db

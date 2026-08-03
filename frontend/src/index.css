@@ -1,0 +1,164 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&display=swap");
+@import 'tailwindcss';
+
+@theme {
+  /* Backgrounds */
+  --color-bg: #0a0a0a;
+  --color-bg-raise: #151515;
+  --color-bg-hover: #1f1f1f;
+  --color-bg-inset: #040404;
+  --color-bg-selected: #1c1c22;
+
+  /* Borders */
+  --color-border: #2a2a2a;
+  --color-border-subtle: #1f1f1f;
+  --color-border-focus: #353535;
+  --color-border-active: #454545;
+
+  /* Foreground */
+  --color-fg: #e5e5e5;
+  --color-fg-secondary: #a3a3a3;
+  --color-fg-muted: #737373;
+  --color-fg-dim: #525252;
+
+  /* Accent */
+  --color-accent: #2563eb;
+  --color-accent-hover: #3b82f6;
+  --color-accent-muted: #1e40af;
+
+  /* Extended accent palette */
+  --color-violet: #8b5cf6;
+  --color-violet-hover: #a78bfa;
+  --color-cyan: #06b6d4;
+  --color-cyan-hover: #22d3ee;
+
+  /* Status */
+  --color-ok: #22c55e;
+  --color-warn: #f59e0b;
+  --color-err: #ef4444;
+  --color-status-queued: #525252;
+  --color-status-waiting: #737373;
+  --color-status-running: #2563eb;
+  --color-status-passed: #22c55e;
+  --color-status-failed: #ef4444;
+  --color-status-canceled: #737373;
+  --color-status-timed-out: #f59e0b;
+  --color-status-skipped: #404040;
+
+  /* Fonts */
+  --font-sans: "IBM Plex Sans", "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Type scale — nudged up ~1–3px from the old dense ramp for readability. */
+  --text-2xs: 12px;
+  --text-xs: 13px;
+  --text-sm: 14px;
+  --text-base: 15px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 28px;
+  --text-3xl: 33px;
+  --text-4xl: 47px;
+
+  /* Spacing (4px grid) */
+  --spacing-0: 0;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+
+  /* Transitions */
+  --transition-property-fast: color, border-color, background-color;
+  --transition-timing-function-fast: ease;
+  --transition-duration-fast: 120ms;
+  --transition-property-normal: color, border-color, background-color, width, margin;
+  --transition-timing-function-normal: ease;
+  --transition-duration-normal: 200ms;
+
+  /* Shadows */
+  --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.45);
+  --shadow-panel: 0 1px 0 rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.55);
+
+  /* Animations */
+  --animate-pulse: hm-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes hm-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+}
+
+:focus-visible:not(input, textarea, select) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* DAG Graph */
+.dag__dot {
+  fill: var(--color-fg-dim);
+}
+.dag__arrow {
+  fill: var(--color-fg-dim);
+}
+.dag__arrow-lit {
+  fill: var(--color-accent);
+}
+.dag__node-bg {
+  fill: var(--color-bg);
+  stroke: var(--color-border);
+  stroke-width: 1;
+  transition: stroke 120ms ease;
+}
+.dag__node:hover .dag__node-bg {
+  stroke: var(--color-border-active);
+}
+.dag__node-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--color-fg);
+}
+.dag__node-duration {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--color-fg-muted);
+}
+.dag__edge {
+  stroke: var(--color-fg-dim);
+  stroke-width: 1;
+  fill: none;
+}
+.dag__node--waiting .dag__node-bg {
+  stroke: var(--color-fg-muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.dag__node--lit .dag__node-bg {
+  stroke: var(--color-border-active);
+  stroke-width: 2;
+}
+.dag__node--dim {
+  opacity: 0.35;
+  transition: opacity 120ms ease;
+}
+.dag__edge--lit {
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+}
+.dag__edge--dim {
+  opacity: 0.25;
+  transition: opacity 120ms ease;
+}

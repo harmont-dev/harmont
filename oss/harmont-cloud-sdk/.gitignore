@@ -1,0 +1,11 @@
+# Generated SDK — build artifact, never committed (regenerated from openapi.json).
+/src/generated/
+
+# tsup build output — build artifact, never committed (shipped in the npm tarball).
+/dist/
+
+# Node
+/node_modules/
+
+# openapi-ts crash logs (written to cwd on codegen failure)
+openapi-ts-error-*.log

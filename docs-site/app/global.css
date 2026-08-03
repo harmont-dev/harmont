@@ -1,0 +1,251 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+@import 'fumadocs-openapi/css/preset.css';
+
+@theme inline {
+  --font-sans: var(--font-sans), 'Inter', system-ui, sans-serif;
+  --font-mono: var(--font-mono), 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Sharp corners — the Harmont look. Marketing code frames use radius 0;
+     keep a 2px hair on the largest surfaces (lg/xl/2xl) so focus rings and
+     popovers don't look broken. */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+}
+
+/* Harmont aesthetic: dark theme only, blue accent, muted black surface.
+   Values are the EXACT product palette
+   so a visitor feels one continuous product across site -> docs. */
+:root,
+.dark {
+  /* Fumadocs surface + text */
+  --color-fd-background: #0a0a0a;
+  --color-fd-foreground: #e5e5e5;
+  --color-fd-muted: #151515;            /* bg-raise */
+  --color-fd-muted-foreground: #a3a3a3; /* fg-secondary: prose, sidebar inactive, toc */
+  --color-fd-card: #151515;
+  --color-fd-card-foreground: #e5e5e5;
+  --color-fd-popover: #151515;
+  --color-fd-popover-foreground: #e5e5e5;
+  --color-fd-primary: #3b82f6;          /* accent-hover (brighter for links/active) */
+  --color-fd-primary-foreground: #ffffff;
+  --color-fd-secondary: #151515;
+  --color-fd-secondary-foreground: #e5e5e5;
+  --color-fd-accent: #1f1f1f;           /* surface accent — NOT the blue accent; Fumadocs uses this for hover menus */
+  --color-fd-accent-foreground: #e5e5e5;
+  --color-fd-border: #2a2a2a;
+  --color-fd-ring: #3b82f6;
+
+  /* Status callouts -> marketing status colors */
+  --color-fd-info: #3b82f6;
+  --color-fd-success: #22c55e;
+  --color-fd-warning: #f59e0b;
+  --color-fd-error: #ef4444;
+
+  /* Harmont design tokens reused by the footer + hero (Task 5/6).
+     A subset of the product design tokens. */
+  --bg: #0a0a0a;
+  --bg-raise: #151515;
+  --bg-hover: #1f1f1f;
+  --bg-inset: #040404;
+  --border: #2a2a2a;
+  --border-subtle: #1f1f1f;
+  --border-active: #454545;
+  --fg: #e5e5e5;
+  --fg-secondary: #a3a3a3;
+  --fg-muted: #737373;
+  --fg-dim: #404040;
+  --accent: #2563eb;
+  --accent-hover: #3b82f6;
+  --ok: #22c55e;
+
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
+  --sp-12: 48px; --sp-16: 64px;
+  --text-sm: 15px; --text-md: 18px; --text-lg: 20px;
+  --text-2xl: 30px; --text-3xl: 35px; --text-4xl: 50px;
+  --w-medium: 500; --w-semibold: 600;
+  --tx-fast: 120ms ease;
+}
+
+html {
+  color-scheme: dark;
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+/* Body prose is proportional; only computerized content is monospace. */
+body {
+  font-family: var(--font-sans);
+}
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
+}
+
+/* Sub-100ms feel: kill non-essential transitions on critical paths. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Heading rhythm mirrors the marketing type doctrine: weight 600, tight
+   negative tracking, dense line-height. Applies to prose + DocsTitle. */
+h1, h2, h3, h4 {
+  font-weight: var(--w-semibold);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+h1 {
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+/* Fast, calm link transitions — match marketing's --tx-fast. */
+a {
+  transition: color var(--tx-fast);
+}
+
+/* Code-block frame matches marketing: inset (darker) surface, sharp, thin
+   border. Fumadocs 16 renders the block as `figure.shiki` with the
+   github-dark Shiki theme — the same theme marketing's Expressive Code uses
+   (astro.config themes: ['github-dark']) — so we restyle only the frame.
+   The figure bg comes from a `bg-fd-card` utility (an @layer rule, which this
+   unlayered selector beats without !important); the per-line bg comes from an
+   inline `--shiki-dark-bg` custom property, which only !important can override. */
+.shiki:not(.not-fumadocs-codeblock *) {
+  background: var(--bg-inset);
+  border-color: var(--border);
+  --shiki-dark-bg: var(--bg-inset) !important;
+}
+/* Inline code keeps the raised surface so it stands off the prose. Fumadocs
+   hardcodes a 5px radius on inline code (not via --radius-*), so square it
+   explicitly to match the sharp look. */
+:not(pre) > code {
+  background: var(--bg-raise);
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+
+/* Sidebar-bottom brand footer (components/site-footer.tsx). Muted, small,
+   matches the marketing footer register at sidebar scale. */
+.docs-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+.docs-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-weight: var(--w-semibold);
+  letter-spacing: -0.02em;
+}
+.docs-footer-pbc {
+  color: var(--fg-muted);
+  font-weight: var(--w-medium);
+}
+.docs-footer-links {
+  display: flex;
+  gap: var(--sp-3);
+}
+.docs-footer-social {
+  display: flex;
+  gap: var(--sp-3);
+}
+.docs-footer a {
+  color: var(--fg-muted);
+  display: inline-flex;
+}
+.docs-footer a:hover {
+  color: var(--fg);
+}
+
+/* Landing hero (components/docs-hero.tsx) — full-width index page. Centered,
+   mirrors the marketing Hero: big glyph, balanced headline, accent span,
+   two CTA buttons. */
+.docs-hero {
+  text-align: center;
+  padding-block: var(--sp-16) var(--sp-12);
+}
+.docs-hero-glyph {
+  display: block;
+  margin: 0 auto var(--sp-8);
+  color: var(--fg);
+}
+.docs-hero-title {
+  font-size: var(--text-4xl);
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  max-width: 18ch;
+  margin-inline: auto;
+  text-wrap: balance;
+}
+.docs-hero-accent {
+  color: var(--accent-hover);
+}
+.docs-hero-lede {
+  margin: var(--sp-4) auto 0;
+  max-width: 56ch;
+  font-size: var(--text-lg);
+  color: var(--fg-secondary);
+  line-height: 1.6;
+}
+.docs-hero-lede code {
+  font-size: 0.9em;
+}
+.docs-hero-cta {
+  display: flex;
+  gap: var(--sp-3);
+  justify-content: center;
+  margin-top: var(--sp-8);
+}
+.docs-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-weight: var(--w-medium);
+  transition: background var(--tx-fast), border-color var(--tx-fast);
+}
+.docs-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-active);
+  color: var(--fg);
+}
+.docs-btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.docs-btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: #fff;
+}
+@media (max-width: 720px) {
+  .docs-hero-title { font-size: var(--text-3xl); }
+}

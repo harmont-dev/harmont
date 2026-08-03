@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+      Content-Security-Policy. With the localStorage bearer-token model, any
+      injected script can exfiltrate the session token, so we constrain what
+      the page may load and where it may talk.
+
+        default-src 'self'          — fall back to same-origin for anything not
+                                      named below.
+        script-src  'self'          — only our own bundled JS runs. No inline
+                                      <script>, no eval. (Vite emits hashed
+                                      module files served from this origin.)
+        style-src   'self' 'unsafe-inline' https://fonts.googleapis.com
+                                    — Tailwind v4 + Solid inject styles via
+                                      <style> tags (inline styles required), and
+                                      src/index.css @imports the Google Fonts
+                                      stylesheets (JetBrains Mono, IBM Plex Sans)
+                                      from fonts.googleapis.com.
+        img-src     'self' data:    — bundled icons/favicons plus data: URIs.
+        font-src    'self' data: https://fonts.gstatic.com
+                                    — bundled/data: fonts plus the Google Fonts
+                                      woff2 files (served from fonts.gstatic.com).
+        connect-src 'self' https: http://localhost:* http://127.0.0.1:* http: ws: wss:
+                                    — XHR/fetch + SSE (EventSource) to the API
+                                      and executor origins, which are
+                                      deploy-time env vars (prod: api/exec
+                                      *.harmont.dev over https; dev: a
+                                      Tailscale/loopback host over http). https:
+                                      covers prod; http:/ws:/wss: cover dev and
+                                      the SSE/log-stream transport.
+        base-uri 'self'; form-action 'self'
+                                    — no <base> hijack; forms post same-origin.
+                                      OAuth uses window.open (a top-level popup
+                                      navigation), which CSP does not govern, so
+                                      no accounts.google.com / github.com entry
+                                      is needed here.
+
+      Clickjacking protection (frame-ancestors / X-Frame-Options) is NOT set
+      here: a <meta> CSP cannot carry frame-ancestors (browsers ignore it and
+      warn). It must be a response header set at the serving edge (the LB / GCS
+      backend) — tracked as a follow-up.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: http://localhost:* http://127.0.0.1:* http: ws: wss:; base-uri 'self'; form-action 'self'"
+    />
+    <meta name="theme-color" content="#000000" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+    <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
+    <title>Harmont</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+    <script src="/src/index.tsx" type="module"></script>
+  </body>
+</html>

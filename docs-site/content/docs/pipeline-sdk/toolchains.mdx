@@ -1,0 +1,91 @@
+---
+title: Toolchains
+description: Install a language, warm its cache, and run build/test/lint in one call.
+---
+
+A toolchain wraps three things: installing the runtime, warming the dependency
+cache, and the common build/test/lint commands. You call one factory, then
+attach the actions you want. Each action forks off the shared install step, so
+adding a check costs you the action — never the install.
+
+## Rust
+
+`hm.rust.toolchain()` installs the toolchain; the action methods build, test,
+lint, and format.
+
+<DslSignature name="rust.toolchain" />
+
+<SdkTabs>
+  <Tab value="Python">
+```python
+import harmont as hm
+
+@hm.pipeline("ci")
+def ci() -> tuple[hm.Step, ...]:
+    project = hm.rust.toolchain(path=".")
+    return (project.build(), project.test(), project.clippy(), project.fmt())
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript
+import { pipeline, type PipelineDefinition } from "@harmont/hm";
+import { rust } from "@harmont/hm/toolchains";
+
+const project = rust.toolchain({ path: "." });
+
+const pipelines: PipelineDefinition[] = [
+  { slug: "ci", pipeline: pipeline([project.build(), project.test(), project.clippy(), project.fmt()]) },
+];
+export default pipelines;
+```
+  </Tab>
+</SdkTabs>
+
+## CMake (C / C++)
+
+`hm.cmake()` configures and builds with CMake. Pass `compiler`, `defines`, a
+`generator`, or a `preset`; the action methods run CTest, clang-format, and
+clang-tidy.
+
+<DslSignature name="cmake" />
+
+<SdkTabs>
+  <Tab value="Python">
+```python
+import harmont as hm
+
+@hm.pipeline("ci")
+def ci() -> tuple[hm.Step, ...]:
+    project = hm.cmake(
+        path=".",
+        compiler="clang-18",
+        defines={"CMAKE_BUILD_TYPE": "Release", "CMAKE_CXX_STANDARD": "20"},
+    )
+    return (project.test(), project.lint(), project.fmt())
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript
+import { pipeline, type PipelineDefinition } from "@harmont/hm";
+import { cmake } from "@harmont/hm/toolchains";
+
+const project = cmake({
+  path: ".",
+  compiler: "clang-18",
+  defines: { CMAKE_BUILD_TYPE: "Release", CMAKE_CXX_STANDARD: "20" },
+});
+
+const pipelines: PipelineDefinition[] = [
+  { slug: "ci", pipeline: pipeline([project.test(), project.lint(), project.fmt()]) },
+];
+export default pipelines;
+```
+  </Tab>
+</SdkTabs>
+
+## Every toolchain
+
+Harmont ships toolchains for **Rust**, **Python**, **Go**, **JavaScript/TypeScript**
+(`js`/`ts`, with npm, pnpm, yarn, and Bun), **CMake** (C/C++), **Elixir**,
+and **Zig**. Each one's full method list lives in the
+[toolchains reference](/pipeline-sdk/reference/toolchains).

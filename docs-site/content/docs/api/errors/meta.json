@@ -1,0 +1,28 @@
+{
+  "title": "Errors",
+  "pages": [
+    "index",
+    "---Passkey & auth---",
+    "passkey_token_invalid",
+    "passkey_challenge_invalid",
+    "passkey_assertion_failed",
+    "passkey_registration_failed",
+    "passkey_unknown_credential",
+    "passkey_user_verification_required",
+    "passkey_signup_email_taken",
+    "passkey_last_credential",
+    "passkey_email_send_failed",
+    "email_unconfigured",
+    "---API keys---",
+    "api_token_not_found",
+    "---Access---",
+    "signup_cap_reached",
+    "signup_failed",
+    "---Billing---",
+    "billing_insufficient_balance",
+    "billing_unconfigured",
+    "billing_provider_error",
+    "---Pipelines---",
+    "pipeline_manual_disabled"
+  ]
+}

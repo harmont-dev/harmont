@@ -1,0 +1,73 @@
+---
+title: Pipeline SDK
+description: Define Harmont pipelines in code — Python or TypeScript.
+---
+
+A Harmont pipeline is a small program. You import the SDK, build a graph of
+shell steps, and register it so the CLI can find it. You write pipelines as
+Python or TypeScript programs rather than YAML, and `hm` runs them.
+
+The same pipeline can be written in Python or TypeScript. Pick a language with
+the switch on any code sample; your choice follows you across the docs.
+
+<SdkTabs>
+  <Tab value="Python">
+```python title=".hm/pipeline.py"
+import harmont as hm
+
+@hm.pipeline("ci", triggers=[hm.push(branch="main")])
+def ci() -> tuple[hm.Step, ...]:
+    project = hm.rust.toolchain(path=".")
+    return (project.build(), project.test())
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript title=".hm/pipeline.ts"
+import { pipeline, push, type PipelineDefinition } from "@harmont/hm";
+import { rust } from "@harmont/hm/toolchains";
+
+const project = rust.toolchain({ path: "." });
+
+const pipelines: PipelineDefinition[] = [
+  {
+    slug: "ci",
+    triggers: [push({ branch: "main" })],
+    pipeline: pipeline([project.build(), project.test()]),
+  },
+];
+
+export default pipelines;
+```
+  </Tab>
+</SdkTabs>
+
+## Install
+
+Install the SDK for your language so your editor gives you types and
+autocomplete as you write pipelines.
+
+<SdkTabs>
+  <Tab value="Python">
+```bash
+pip install harmont
+# or: uv add harmont
+```
+  </Tab>
+  <Tab value="TypeScript">
+```bash
+npm install @harmont/hm
+# or: pnpm add @harmont/hm
+# or: bun add @harmont/hm
+```
+  </Tab>
+</SdkTabs>
+
+## Where to go next
+
+<Cards>
+  <Card title="Chains & steps" href="/pipeline-sdk/chains" description="The Step primitive, forking, and waits — how the graph is built." />
+  <Card title="Toolchains" href="/pipeline-sdk/toolchains" description="Install, build, and test for Rust, Python, Go, Node, CMake, and more." />
+  <Card title="Caching" href="/pipeline-sdk/caching" description="TTL, on-change, and forever cache policies." />
+  <Card title="Triggers" href="/pipeline-sdk/triggers" description="Run pipelines on push or pull request." />
+  <Card title="Reference" href="/pipeline-sdk/reference" description="Every public function, class, and toolchain, generated from the source." />
+</Cards>

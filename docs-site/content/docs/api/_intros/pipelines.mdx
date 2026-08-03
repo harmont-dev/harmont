@@ -1,0 +1,7 @@
+A pipeline is a named CI definition inside an organization — the thing
+you push code against. Each pipeline owns its builds; its `pipeline_slug`
+is unique within the org.
+
+These endpoints list and create pipelines and fetch a single pipeline's
+record (including its `build_count`). To run one, create a build under it
+— see [Builds](/api/reference/builds).

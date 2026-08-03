@@ -1,0 +1,63 @@
+---
+title: Chains & steps
+description: How a pipeline is built from chained shell steps, forks, and waits.
+---
+
+A pipeline is a directed graph of **steps**. You build it by chaining method
+calls off a root and returning the leaf (or leaves). A step built off another
+runs after it and inherits its filesystem; steps returned together with no
+dependency between them run in parallel.
+
+## Starting a chain
+
+`hm.sh(...)` starts a chain and sets its first command — shorthand for
+`hm.scratch().sh(...)`.
+
+<DslSignature name="sh" />
+
+<SdkTabs>
+  <Tab value="Python">
+```python
+import harmont as hm
+
+build = hm.sh("make build").sh("make test")
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript
+import { sh } from "@harmont/hm";
+
+const build = sh("make build").sh("make test");
+```
+  </Tab>
+</SdkTabs>
+
+## Forking and joining
+
+Call `.fork()` to branch, and `hm.wait()` for a join barrier.
+
+<DslSignature name="wait" />
+
+<SdkTabs>
+  <Tab value="Python">
+```python
+import harmont as hm
+
+root = hm.sh("make deps")
+lint = root.fork("lint").sh("make lint")
+test = root.fork("test").sh("make test")
+```
+  </Tab>
+  <Tab value="TypeScript">
+```typescript
+import { sh } from "@harmont/hm";
+
+const root = sh("make deps");
+const lint = root.fork({ label: "lint" }).sh("make lint");
+const test = root.fork({ label: "test" }).sh("make test");
+```
+  </Tab>
+</SdkTabs>
+
+The full `Step` field and method list is in the
+[chains reference](/pipeline-sdk/reference/chains).

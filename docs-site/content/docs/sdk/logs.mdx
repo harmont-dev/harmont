@@ -1,0 +1,52 @@
+---
+title: Streaming logs
+description: Follow a job's logs over Server-Sent Events.
+---
+
+Job logs stream over Server-Sent Events (SSE), not a request/response endpoint,
+so they are intentionally **not** an SDK function. Streaming is two steps: mint
+a short-lived log token with the SDK, then open the SSE URL directly.
+
+## 1. Mint a log token
+
+<SdkSignature name="getBuildLogToken" />
+
+```ts
+import { getBuildLogToken } from "@harmont/cloud";
+
+const { data: tok, error } = await getBuildLogToken({
+  client,
+  path: { org: "acme", pipeline: "ci", number: 42 },
+});
+if (error) throw new Error(error.error.code);
+```
+
+The token is short-lived and scoped to that build's logs.
+
+## 2. Open the SSE stream
+
+Open the log endpoint with the token as a query parameter and iterate the
+response body. Note the log stream lives at `/v0/jobs/{jobId}/logs` — outside
+the `/api/v0` base the other endpoints use:
+
+```ts
+const res = await fetch(
+  `https://api.harmont.dev/v0/jobs/${jobId}/logs?token=${tok.token}`,
+);
+const reader = res.body!.getReader();
+const decoder = new TextDecoder();
+for (;;) {
+  const { value, done } = await reader.read();
+  if (done) break;
+  process.stdout.write(decoder.decode(value));
+}
+```
+
+List a build's jobs with `listJobs` to get each `jobId`. See the
+[end-to-end example](/sdk/example) for the full create → poll → stream flow.
+
+<Callout type="info">
+The log token is passed as a query parameter because `EventSource` and many
+SSE clients can't set custom headers. It is redacted from server-side request
+logs.
+</Callout>

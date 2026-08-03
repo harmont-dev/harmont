@@ -1,0 +1,54 @@
+---
+title: Architecture
+description: How a pipeline becomes a running build, under the hood.
+---
+
+You don't need anything here to use Harmont — it's for the curious and for
+debugging. The higher-level guides stay focused on writing and running
+pipelines; this is the one place that explains what happens beneath them.
+
+## From code to a build
+
+Running a pipeline goes through a few stages:
+
+1. **You write a pipeline** in the [Pipeline SDK](/pipeline-sdk) — a Python or
+   TypeScript program under `.hm/`.
+2. **`hm` compiles it** to a small, versioned JSON document — the intermediate
+   representation (IR). The IR describes your steps as a graph: each step's
+   command, image, cache policy, and which steps it depends on.
+3. **Harmont creates a build** from that IR — one build with a job per step.
+4. **The executor runs each job** in an isolated sandbox, streaming logs back
+   as it goes. Dependent steps run in order and share a filesystem snapshot;
+   independent steps run in parallel.
+
+<PipelineDag
+  caption="Two ways to start a build — hm run from your local working tree, or Harmont Cloud — both compile to the same IR. Harmont creates the build and the executor runs each job in an isolated sandbox, streaming logs back."
+  nodes={[
+    { id: 'local', label: 'hm run' },
+    { id: 'cloud', label: 'Harmont Cloud' },
+    { id: 'ir', label: 'IR (JSON)' },
+    { id: 'build', label: 'build + jobs' },
+    { id: 'executor', label: 'executor' },
+    { id: 'sandbox', label: 'sandbox' },
+  ]}
+  edges={[
+    { from: 'local', to: 'ir' },
+    { from: 'cloud', to: 'ir' },
+    { from: 'ir', to: 'build' },
+    { from: 'build', to: 'executor' },
+    { from: 'executor', to: 'sandbox' },
+  ]}
+/>
+
+## Why an IR
+
+The IR is the stable contract between the SDK and the rest of Harmont. Both
+the Python and TypeScript SDKs are front-ends that compile to the same IR,
+which is why any example can ship the same pipeline in either language — and
+why your choice of SDK is a matter of taste.
+
+You can print the IR a pipeline compiles to, without running it:
+
+```bash
+hm render ci
+```

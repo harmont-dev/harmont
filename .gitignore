@@ -1,0 +1,92 @@
+# Rust
+agent/target/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# C
+*.o
+*.so
+*.dylib
+*.a
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+\#*\#
+.dir-locals.el
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Dev credentials
+.hm-dev-env
+
+# Dev-up logs
+.dev-logs/
+
+# The OpenAPI spec + error catalog are committed under
+# elixir/apps/harmont_api/priv/static/; see the Makefile codegen targets.
+
+# Docker
+docker-compose.override.yml
+
+# Git worktrees
+.worktrees/
+
+
+# Stray binary installers
+*.deb
+
+# Dev-up build log overspill
+build_stdout.log
+build_stderr.log
+
+.superpowers/
+
+# docs-site (fumadocs)
+docs-site/.next/
+docs-site/.source/
+docs-site/out/
+docs-site/node_modules/
+docs-site/openapi.json
+docs-site/error-catalog.json
+docs-site/content/docs/api/reference/
+docs-site/next-env.d.ts
+docs-site/*.tsbuildinfo
+
+# examples/ is fetched from harmont-dev/harmont-cli at build time (see the
+# `examples` target in the Makefile and the examples-fetch stage in
+# docs-site/Dockerfile) — it left this tree in commit a3ade666 and is no
+# longer committed here.
+/examples/

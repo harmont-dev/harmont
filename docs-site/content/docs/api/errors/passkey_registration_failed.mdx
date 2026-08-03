@@ -1,0 +1,23 @@
+---
+title: passkey_registration_failed
+description: The passkey could not be registered.
+---
+
+<ErrorMeta code="passkey_registration_failed" />
+
+## When this happens
+
+The attestation your authenticator returned during sign-up could not be
+verified. This can follow a mismatched relying-party domain (registering from a
+different origin than the one the server expects), an authenticator that
+returns an attestation format the server does not accept, a credential the
+device declined to create with the required user verification, or a browser
+extension interfering with WebAuthn.
+
+## How to fix it
+
+Start the sign-up again from the official domain and complete the device prompt
+(PIN or biometric) when asked. If it keeps failing, try a different
+authenticator or device, or sign in with Google/GitHub and add a passkey from
+settings afterward. The response message includes a specific reason after the
+colon, and the server records the underlying cause for support to inspect.

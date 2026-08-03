@@ -1,0 +1,20 @@
+---
+title: passkey_assertion_failed
+description: The passkey signature did not validate.
+---
+
+<ErrorMeta code="passkey_assertion_failed" />
+
+## When this happens
+
+Your authenticator produced a signature that did not verify against the stored
+public key. This can follow a corrupted credential, a mismatched origin (for
+example, signing in from a different domain than the one you registered), or a
+browser extension interfering with WebAuthn.
+
+## How to fix it
+
+Try the sign-in again. If it keeps failing, register a new passkey from a
+trusted device on the official domain, or sign in with Google/GitHub and add a
+fresh passkey from settings. The response message includes a specific reason
+after the colon.
